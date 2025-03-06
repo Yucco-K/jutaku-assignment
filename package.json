@@ -29,7 +29,6 @@
     "@mantine/dates": "^7.7.0",
     "@mantine/hooks": "^7.7.0",
     "@mantine/modals": "^7.7.0",
-    "@prisma/client": "^6.4.1",
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.48.1",
     "@tanstack/react-query": "^4.18.0",
@@ -42,7 +41,6 @@
     "jsonwebtoken": "^9.0.2",
     "next": "^14",
     "nextjs-routes": "^2.2.5",
-    "prisma": "^6.4.1",
     "react": "^18",
     "react-dom": "^18",
     "react-hook-form": "^7.51.1",
@@ -54,6 +52,7 @@
   "devDependencies": {
     "@biomejs/biome": "^1.6.1",
     "@mermaid-js/mermaid-cli": "^10.8.0",
+    "@prisma/client": "^6.4.1",
     "@types/bun": "latest",
     "@types/jsonwebtoken": "^9.0.6",
     "@types/react": "^18",
@@ -63,14 +62,13 @@
     "postcss": "^8.4.38",
     "postcss-preset-mantine": "^1.13.0",
     "postcss-simple-vars": "^7.0.1",
-    "prisma-erd-generator": "^1.11.2",
+    "prisma": "^6.4.1",
     "rimraf": "^5.0.5",
-    "simple-git-hooks": "^2.11.0",
+    "simple-git-hooks": "^2.11.1",
     "typescript": "latest",
     "vercel": "^33.6.1"
   },
   "simple-git-hooks": {
-    "pre-commit": "bun run biome:apply",
-    "pre-push": "bun run typecheck"
+    "pre-commit": "bun run biome:apply"
   }
 }

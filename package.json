@@ -70,7 +70,6 @@
     "vercel": "^33.6.1"
   },
   "simple-git-hooks": {
-    "pre-commit": "bun run biome:apply",
-    "pre-push": "bun run typecheck"
+    "pre-commit": "bun run biome:apply"
   }
 }

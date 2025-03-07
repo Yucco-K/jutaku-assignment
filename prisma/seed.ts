@@ -13,7 +13,6 @@ async function main() {
       create: {
         name: 'User One',
         email: 'user1@example.com',
-        password: 'hashedpassword1',
         role: UserRole.ADMIN
       }
     }),
@@ -23,7 +22,6 @@ async function main() {
       create: {
         name: 'User Two',
         email: 'user2@example.com',
-        password: 'hashedpassword2',
         role: UserRole.USER
       }
     }),
@@ -33,7 +31,6 @@ async function main() {
       create: {
         name: 'User Three',
         email: 'user3@example.com',
-        password: 'hashedpassword3',
         role: UserRole.USER
       }
     }),
@@ -43,7 +40,6 @@ async function main() {
       create: {
         name: 'User Four',
         email: 'user4@example.com',
-        password: 'hashedpassword4',
         role: UserRole.ADMIN
       }
     })
@@ -55,7 +51,6 @@ async function main() {
       data: {
         title: 'Webアプリ開発',
         overview: 'Reactを用いた開発案件',
-        description: '詳細な説明がここに入る',
         price: 500000,
         deadline: new Date('2025-04-01'),
         created_at: new Date(),
@@ -66,7 +61,6 @@ async function main() {
       data: {
         title: 'モバイルアプリ開発',
         overview: 'iOS/Androidアプリの開発',
-        description: '詳細な説明がここに入る',
         price: 800000,
         deadline: new Date('2025-05-01'),
         created_at: new Date(),
@@ -77,7 +71,6 @@ async function main() {
       data: {
         title: 'PHPシステム開発',
         overview: 'PHPを用いたシステム構築',
-        description: 'Laravelを使用したバックエンド開発',
         price: 600000,
         deadline: new Date('2025-06-01'),
         created_at: new Date(),
@@ -88,7 +81,6 @@ async function main() {
       data: {
         title: 'Javaアプリ開発',
         overview: 'Javaによる業務アプリ開発',
-        description: 'Spring Bootを利用した開発',
         price: 700000,
         deadline: new Date('2025-07-01'),
         created_at: new Date(),

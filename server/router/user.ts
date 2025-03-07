@@ -20,7 +20,12 @@ export const userRouter = router({
     .mutation(async ({ input, ctx: { userId } }) => {
       console.log('create', { userId, input })
       // 認証プロバイダー（supabase）のユーザーIDを指定して作成
-      return await userRepository.create({ id: userId, ...input })
+      return await userRepository.create({
+        id: userId,
+        name: input.name,
+        email: input.email,
+        password: 'defaultPassword123' // 🔥 仮のパスワードを追加
+      })
     }),
   update: userProcedure
     .input(

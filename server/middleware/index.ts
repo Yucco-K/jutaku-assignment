@@ -3,6 +3,7 @@ import { $Enums } from '@prisma/client'
 import { supabaseUserProcedure } from './supabaseAuth'
 import { t } from '~/lib/trpc/trpc'
 import { userRepository } from '../repository/user'
+import { UserRole } from '@prisma/client'
 
 // 認証ミドルウェア
 /**
@@ -21,7 +22,7 @@ export const userProcedure = supabaseUserProcedure
 export const adminProcedure = userProcedure.use(
   async ({ next, ctx: { userId, req } }) => {
     const user = await userRepository.findUnique(userId)
-    if (user?.role !== $Enums.Role.ADMIN) {
+    if (user?.role !== UserRole.ADMIN) {
       throw new TRPCError({
         code: 'UNAUTHORIZED',
         message: 'You must be a Admin.'

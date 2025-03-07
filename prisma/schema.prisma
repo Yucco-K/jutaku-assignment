@@ -15,20 +15,18 @@ enum UserRole {
 }
 
 model User {
-  id       String  @id @default(uuid()) @unique
+  id       String  @id @default(uuid())
   name     String
   email    String  @unique
-  password String
   role     UserRole @default(USER)
   projects Project[]
   entries  Entry[]
 }
 
 model Project {
-  id          String  @id @default(uuid()) @unique
+  id          String  @id @default(uuid())
   title       String
   overview    String?
-  description String?
   price       Int?
   deadline    DateTime?
   created_at  DateTime @default(now())
@@ -39,17 +37,18 @@ model Project {
 }
 
 model Skill {
-  id   String  @id @default(uuid()) @unique
+  id   String  @id @default(uuid())
   name String  @unique
   projects ProjectSkill[]
 }
 
 model ProjectSkill {
-  id        String  @id @default(uuid()) @unique
-  project   Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  project    Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
   project_id String
-  skill     Skill   @relation(fields: [skill_id], references: [id], onDelete: Cascade)
-  skill_id  String
+  skill      Skill   @relation(fields: [skill_id], references: [id], onDelete: Cascade)
+  skill_id   String
+
+  @@id([project_id, skill_id])
 }
 
 enum EntryStatus {
@@ -59,12 +58,13 @@ enum EntryStatus {
 }
 
 model Entry {
-  id         String  @id @default(uuid()) @unique
   status     EntryStatus
   entry_date DateTime @default(now())
   project    Project  @relation(fields: [project_id], references: [id], onDelete: Cascade)
   project_id String
   user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
   user_id    String
+
+  @@id([project_id, user_id])
 }
 

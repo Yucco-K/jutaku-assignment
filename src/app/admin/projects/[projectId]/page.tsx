@@ -1,6 +1,7 @@
 'use client'
 import React, { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
+import type { RouteLiteral } from 'nextjs-routes'
 import {
   Card,
   Button,
@@ -103,7 +104,7 @@ export default function AdminProjectDetail() {
   // 編集ボタンのクリックハンドラ
   const handleEdit = () => {
     if (params?.projectId) {
-      router.push(`/admin/projects/${params.projectId}/edit`)
+      router.push(`/admin/projects/${params.projectId}/edit` as RouteLiteral)
     }
   }
 

@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react'
 import { Table, Button, Title } from '@mantine/core'
 import { useRouter } from 'next/navigation'
+import type { RouteLiteral } from 'nextjs-routes'
 
 export const ProjectList = () => {
   const router = useRouter()
@@ -27,7 +28,7 @@ export const ProjectList = () => {
 
   // 案件詳細ページへの遷移処理
   const handleProjectDetail = (projectId: number) => {
-    router.push(`/projects/${projectId}`)
+    router.push(`/projects/${projectId}` as RouteLiteral)
   }
 
   return (

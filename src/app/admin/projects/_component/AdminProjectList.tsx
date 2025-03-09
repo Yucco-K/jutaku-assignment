@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react'
 import { Table, Button, Modal, Title, Text, Group } from '@mantine/core'
 import { useRouter } from 'next/navigation'
 import useProjectStore from '@/store/projectStore' // ✅ Zustand のストアをインポート
+import type { RouteLiteral } from 'nextjs-routes'
 
 export const AdminProjectList = () => {
   const router = useRouter()
@@ -197,7 +198,9 @@ export const AdminProjectList = () => {
                           fontSize: '0.8rem'
                         }}
                         onClick={() =>
-                          router.push(`/admin/projects/${project.id}`)
+                          router.push(
+                            `/admin/projects/${project.id}` as RouteLiteral
+                          )
                         }
                       >
                         詳細
@@ -211,7 +214,9 @@ export const AdminProjectList = () => {
                           fontSize: '0.8rem'
                         }}
                         onClick={() =>
-                          router.push(`/admin/projects/${project.id}/edit`)
+                          router.push(
+                            `/admin/projects/${project.id}/edit` as RouteLiteral
+                          )
                         }
                       >
                         編集

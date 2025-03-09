@@ -1,80 +1,120 @@
 'use client'
-import React from 'react'
+import React, { useState } from 'react'
+import Link from 'next/link'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { signin } from '@/serverActions/supabaseAuth'
-
-// Mantine のコンポーネント
+import { useRouter } from 'next/navigation'
 import {
   Card,
   Button,
   TextInput,
   PasswordInput,
-  Anchor,
-  Text,
   Title,
-  Stack
+  Stack,
+  Container,
+  Group,
+  Divider,
+  Text,
+  Loader
 } from '@mantine/core'
 
-// サインイン用のZodスキーマ
 const signInSchema = z.object({
   email: z.string().email({ message: '無効なメールアドレスです' }),
-  password: z.string().min(1, { message: 'パスワードは必須です' })
+  password: z
+    .string()
+    .min(8, { message: 'パスワードは英数字8文字以上' })
+    .regex(/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]+$/, {
+      message: 'パスワードは英字と数字をそれぞれ1文字以上含める必要があります'
+    })
 })
 type SignInFormData = z.infer<typeof signInSchema>
 
 export function SigninForm() {
+  const router = useRouter()
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting }
-  } = useForm<SignInFormData>({
-    resolver: zodResolver(signInSchema)
-  })
+  } = useForm<SignInFormData>({ resolver: zodResolver(signInSchema) })
 
   const onSignInSubmit = async (data: SignInFormData) => {
-    console.log('aaa')
-
-    await signin(data)
+    setErrorMessage(null)
+    try {
+      await signin(data)
+      router.push('/projects')
+    } catch (error) {
+      console.error('ログインエラー:', error)
+      setErrorMessage(
+        'ログインに失敗しました。メールアドレスとパスワードを確認してください。'
+      )
+    }
   }
 
   return (
-    <Card
-      withBorder
-      shadow="sm"
-      radius="md"
-      padding="xl"
-      style={{ maxWidth: 400, margin: 'auto' }}
-    >
-      <Title order={2} mb="lg">
-        ログイン
-      </Title>
+    <Container size="100%" my={40} className="form-container">
+      <Card
+        withBorder
+        shadow="sm"
+        radius="md"
+        padding="xl"
+        className="card"
+        style={{ maxWidth: '500px', margin: '0 auto' }}
+      >
+        <Title
+          order={3}
+          className="title"
+          style={{ textAlign: 'center', color: '#5a5a5a' }}
+        >
+          ログイン
+        </Title>
 
-      <form onSubmit={handleSubmit(onSignInSubmit)}>
-        <Stack>
-          <TextInput
-            label="メールアドレス"
-            placeholder="email"
-            {...register('email')}
-            // React Hook Form のエラーを Mantine 側の error プロップに渡す
-            error={errors.email?.message}
-            disabled={isSubmitting}
-          />
+        {errorMessage && (
+          <Text
+            className="form-error"
+            style={{ textAlign: 'center', color: 'red', marginBottom: '12px' }}
+          >
+            {errorMessage}
+          </Text>
+        )}
 
-          <PasswordInput
-            label="パスワード"
-            placeholder="password"
-            {...register('password')}
-            error={errors.password?.message}
-            disabled={isSubmitting}
-          />
-
-          <Button type="submit" loading={isSubmitting}>
-            ログイン
-          </Button>
-        </Stack>
-      </form>
-    </Card>
+        <Divider my="lg" />
+        <form onSubmit={handleSubmit(onSignInSubmit)}>
+          <Stack>
+            <TextInput
+              label={<span className="form-label">メールアドレス</span>}
+              required
+              placeholder="email"
+              {...register('email')}
+              error={errors.email?.message}
+              disabled={isSubmitting}
+            />
+            <PasswordInput
+              label={<span className="form-label">パスワード</span>}
+              required
+              placeholder="password"
+              {...register('password')}
+              error={errors.password?.message}
+              disabled={isSubmitting}
+            />
+            <Group className="button-group flex justify-center" my={12}>
+              <Button type="submit" loading={isSubmitting} fullWidth>
+                {isSubmitting ? <Loader size="sm" color="white" /> : 'ログイン'}
+              </Button>
+            </Group>
+          </Stack>
+        </form>
+        <Text className="text-center" mt="md">
+          アカウントをお持ちでないですか？{' '}
+          <Link href="/signup" passHref>
+            <Button variant="subtle" className="nav-link">
+              新規登録
+            </Button>
+          </Link>
+        </Text>
+      </Card>
+    </Container>
   )
 }

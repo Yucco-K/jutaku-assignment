@@ -571,7 +571,7 @@ erDiagram
     Project {
         string id PK "案件ID"
         string title "案件名"
-        string overview "概要"
+        string description "概要"
         int price "単価"
         date deadline "応募締切日"
         date created_at "案件作成日"

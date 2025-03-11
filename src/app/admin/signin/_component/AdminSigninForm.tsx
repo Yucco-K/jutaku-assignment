@@ -58,6 +58,13 @@ export function AdminSigninForm() {
       my={80}
       className="form-container flex justify-center items-center h-screen"
     >
+      <Title
+        order={2}
+        className="title"
+        style={{ textAlign: 'center', color: '#5a5a5a', marginBottom: '2rem' }}
+      >
+        管理者ログイン
+      </Title>
       <Card
         withBorder
         shadow="sm"
@@ -66,13 +73,6 @@ export function AdminSigninForm() {
         className="card"
         style={{ maxWidth: '500px', margin: '0 auto' }}
       >
-        <Title
-          order={3}
-          className="title"
-          style={{ textAlign: 'center', color: '#5a5a5a' }}
-        >
-          管理者ログイン
-        </Title>
         <Divider my="lg" />
 
         {errorMessage && (

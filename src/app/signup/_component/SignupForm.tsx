@@ -61,14 +61,14 @@ export function SignupForm() {
   }
   return (
     <Container size={500} my={80} className="form-container">
+      <Title
+        order={2}
+        className="title"
+        style={{ textAlign: 'center', color: '#5a5a5a', marginBottom: '2rem' }}
+      >
+        新規登録
+      </Title>
       <Card withBorder shadow="sm" radius="md" padding="xl" className="card">
-        <Title
-          order={3}
-          className="title"
-          style={{ textAlign: 'center', color: '#5a5a5a' }}
-        >
-          新規登録
-        </Title>
         <Divider my="lg" />
 
         {errorMessage && (

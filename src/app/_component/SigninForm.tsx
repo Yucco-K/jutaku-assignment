@@ -55,6 +55,13 @@ export function SigninForm() {
 
   return (
     <Container size="100%" my={40} className="form-container">
+      <Title
+        order={2}
+        className="title"
+        style={{ textAlign: 'center', color: '#5a5a5a', marginBottom: '2rem' }}
+      >
+        ログイン
+      </Title>
       <Card
         withBorder
         shadow="sm"
@@ -63,14 +70,6 @@ export function SigninForm() {
         className="card"
         style={{ maxWidth: '500px', margin: '0 auto' }}
       >
-        <Title
-          order={3}
-          className="title"
-          style={{ textAlign: 'center', color: '#5a5a5a' }}
-        >
-          ログイン
-        </Title>
-
         {errorMessage && (
           <Text
             className="form-error"

@@ -14,6 +14,20 @@ import {
 import useProjectStore from '@/store/projectStore'
 import useEntryStore from '@/store/entryStore'
 
+// 日付フォーマット用のヘルパー関数
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}/${month}/${day}`
+}
+
+// 単価フォーマット用のヘルパー関数
+const formatPrice = (price: string) => {
+  return `${Number(price).toLocaleString()}円`
+}
+
 export default function ProjectDetail() {
   const router = useRouter()
   const { projectId } = useParams() as { projectId: string }
@@ -54,7 +68,7 @@ export default function ProjectDetail() {
         style={{
           textAlign: 'center',
           color: '#5a5a5a',
-          marginBottom: '32px'
+          marginBottom: '24px'
         }}
       >
         案件詳細
@@ -91,21 +105,45 @@ export default function ProjectDetail() {
         withBorder
         style={{ maxWidth: '600px', margin: 'auto' }}
       >
-        <Text fw="bold">案件作成日</Text>
-        <Text ml="sm">{selectedProject.date}</Text>
-        <Text fw="bold">案件名</Text>
-        <Text ml="sm">{selectedProject.name}</Text>
-        <Text fw="bold">概要</Text>
-        <Text ml="sm">{selectedProject.description}</Text>
-        <Text fw="bold">必要スキル</Text>
-        <Text ml="sm">{selectedProject.skills.join(', ')}</Text>
-        <Text fw="bold">募集締切日</Text>
-        <Text ml="sm">{selectedProject.deadline}</Text>
-        <Text fw="bold">単価</Text>
-        <Text ml="sm">{selectedProject.price}</Text>
+        <Stack gap="lg">
+          <div style={{ marginBottom: '16px' }}>
+            <Text fw="bold" mb={8}>
+              案件作成日
+            </Text>
+            <Text ml="sm">{formatDate(selectedProject.date)}</Text>
+          </div>
+          <div style={{ marginBottom: '16px' }}>
+            <Text fw="bold" mb={8}>
+              案件名
+            </Text>
+            <Text ml="sm">{selectedProject.name}</Text>
+          </div>
+          <div style={{ marginBottom: '16px' }}>
+            <Text fw="bold" mb={8}>
+              概要
+            </Text>
+            <Text ml="sm">{selectedProject.description}</Text>
+          </div>
+          <div style={{ marginBottom: '16px' }}>
+            <Text fw="bold" mb={8}>
+              必要スキル
+            </Text>
+            <Text ml="sm">{selectedProject.skills.join(', ')}</Text>
+          </div>
+          <div style={{ marginBottom: '16px' }}>
+            <Text fw="bold" mb={8}>
+              募集締切日
+            </Text>
+            <Text ml="sm">{formatDate(selectedProject.deadline)}</Text>
+          </div>
+          <div style={{ marginBottom: '16px' }}>
+            <Text fw="bold" mb={8}>
+              単価
+            </Text>
+            <Text ml="sm">{formatPrice(selectedProject.price)}</Text>
+          </div>
 
-        <Stack mt="md">
-          <Button color="blue" fullWidth onClick={handleEntry}>
+          <Button color="blue" fullWidth onClick={handleEntry} mt={16}>
             この案件にエントリーする
           </Button>
         </Stack>

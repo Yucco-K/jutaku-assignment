@@ -5,6 +5,15 @@ import { useRouter } from 'next/navigation'
 import useProjectStore from '@/store/projectStore' // ✅ Zustand のストアをインポート
 import type { RouteLiteral } from 'nextjs-routes'
 
+// 日付フォーマット用のヘルパー関数
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}/${month}/${day}`
+}
+
 export const AdminProjectList = () => {
   const router = useRouter()
   const { projects, loadProjects, deleteProject } = useProjectStore()
@@ -146,7 +155,7 @@ export const AdminProjectList = () => {
                       padding: '12px'
                     }}
                   >
-                    {project.date}
+                    {formatDate(project.date)}
                   </Table.Td>
                   <Table.Td
                     style={{

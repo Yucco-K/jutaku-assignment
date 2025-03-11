@@ -10,7 +10,7 @@ import {
   Text,
   Loader
 } from '@mantine/core'
-import { IconArrowUp, IconArrowDown, IconSelector } from '@tabler/icons-react'
+import { FaArrowUp, FaArrowDown, FaSort } from 'react-icons/fa'
 import useEntryStore from '@/store/entryStore'
 
 export default function EntryList() {
@@ -114,12 +114,12 @@ export default function EntryList() {
                     <Text>エントリー日</Text>
                     {sortBy === 'date' ? (
                       sortDirection === 'asc' ? (
-                        <IconArrowUp size={16} />
+                        <FaArrowUp size={16} />
                       ) : (
-                        <IconArrowDown size={16} />
+                        <FaArrowDown size={16} />
                       )
                     ) : (
-                      <IconSelector size={16} />
+                      <FaSort size={16} />
                     )}
                   </Group>
                 </UnstyledButton>
@@ -147,12 +147,12 @@ export default function EntryList() {
                     <Text>単価</Text>
                     {sortBy === 'price' ? (
                       sortDirection === 'asc' ? (
-                        <IconArrowUp size={16} />
+                        <FaArrowUp size={16} />
                       ) : (
-                        <IconArrowDown size={16} />
+                        <FaArrowDown size={16} />
                       )
                     ) : (
-                      <IconSelector size={16} />
+                      <FaSort size={16} />
                     )}
                   </Group>
                 </UnstyledButton>
@@ -189,7 +189,7 @@ export default function EntryList() {
                     padding: '12px'
                   }}
                 >
-                  {entry.price}円
+                  {Number(entry.price).toLocaleString()}円
                 </Table.Td>
               </Table.Tr>
             ))}

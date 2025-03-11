@@ -13,6 +13,20 @@ import {
   Table
 } from '@mantine/core'
 
+// 日付フォーマット用のヘルパー関数
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}/${month}/${day}`
+}
+
+// 単価フォーマット用のヘルパー関数
+const formatPrice = (price: string) => {
+  return Number(price).toLocaleString()
+}
+
 // 案件データの型定義
 type Project = {
   id: number
@@ -177,9 +191,14 @@ export default function AdminProjectDetail() {
           {[
             ['案件名', adminProject.name],
             ['概要', adminProject.description],
-            ['必要スキル', adminProject.skills],
-            ['募集締切日', adminProject.deadline],
-            ['単価', `${adminProject.price}円`]
+            [
+              '必要スキル',
+              Array.isArray(adminProject.skills)
+                ? adminProject.skills.join(', ')
+                : adminProject.skills
+            ],
+            ['募集締切日', formatDate(adminProject.deadline)],
+            ['単価', `${formatPrice(adminProject.price)}円`]
           ].map(([label, value], index) => (
             <Table.Tr key={label}>
               <Table.Th

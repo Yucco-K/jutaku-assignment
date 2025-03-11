@@ -4,6 +4,15 @@ import { Table, Button, Title } from '@mantine/core'
 import { useRouter } from 'next/navigation'
 import type { RouteLiteral } from 'nextjs-routes'
 
+// 日付フォーマット用のヘルパー関数
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}/${month}/${day}`
+}
+
 export const ProjectList = () => {
   const router = useRouter()
   const [projects, setProjects] = useState<
@@ -143,7 +152,7 @@ export const ProjectList = () => {
                       padding: '12px'
                     }}
                   >
-                    {project.date}
+                    {formatDate(project.date)}
                   </Table.Td>
                   <Table.Td
                     style={{
@@ -176,7 +185,9 @@ export const ProjectList = () => {
                       padding: '12px'
                     }}
                   >
-                    {project.skills}
+                    {Array.isArray(project.skills)
+                      ? project.skills.join(', ')
+                      : project.skills}
                   </Table.Td>
                   <Table.Td
                     style={{

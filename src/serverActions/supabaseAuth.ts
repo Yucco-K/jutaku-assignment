@@ -8,50 +8,80 @@ import {
 import { redirect } from 'next/navigation'
 import { createClient } from '~/lib/supabase/server'
 import { serverApi } from '~/lib/trpc/server-api'
+import { AuthError, AuthApiError } from '@supabase/supabase-js'
+import { prisma } from '~/server/db'
 
-type EmailAndPassword = {
+type SignupParams = {
+  email: string
+  password: string
+  name: string
+}
+
+type SigninParams = {
   email: string
   password: string
 }
 
+type SignupResponse = {
+  error?: string
+  code?: string
+  success?: boolean
+}
+
 export const signup = async ({
   email,
-  password
-}: EmailAndPassword): Promise<{
-  error?: string
-}> => {
+  password,
+  name
+}: SignupParams): Promise<{ success: true; message: string }> => {
   try {
-    console.log('signup:', { email, password })
+    console.log('signup:', { email, password, name })
 
     const authResponse = await createClient().auth.signUp({
       email,
-      password
-      // options: {
-      //   emailRedirectTo: `${location.origin}/api/auth/callback`
-      // }
-    })
-    console.log('authResponse', authResponse)
-    const user = authResponse.data.user
-    await serverApi().user.create({
-      email: user?.email ?? '',
-      name: user?.email ?? ''
+      password,
+      options: {
+        data: { name }
+      }
     })
 
-    const userId = user?.id
-    if (!userId) return { error: 'userId is undefined' }
-    console.log('signup:', userId)
+    if (authResponse.error) {
+      throw new Error(authResponse.error.message)
+    }
+
+    const user = authResponse.data.user
+    if (!user?.id) {
+      throw new Error('ユーザーIDの取得に失敗しました')
+    }
+
+    const existingUser = await prisma.user.findUnique({
+      where: { id: user.id }
+    })
+    if (existingUser) {
+      throw new Error('このユーザーは既に登録されています')
+    }
+
+    await prisma.user.create({
+      data: {
+        id: user.id,
+        email: user.email ?? '',
+        name: name,
+        role: 'USER'
+      }
+    })
+
+    return { success: true, message: 'アカウントが作成されました' }
   } catch (error) {
-    console.log('error', error)
-    return { error: JSON.stringify(error) }
+    console.error('signup error:', error)
+    throw new Error(
+      error instanceof Error ? error.message : '不明なエラーが発生しました'
+    )
   }
-  redirect(AFTER_SIGNUP_FOR_DB_REGISTER_PATH)
 }
+
 export const signin = async ({
   email,
   password
-}: EmailAndPassword): Promise<{
-  error?: string
-}> => {
+}: SigninParams): Promise<{ success: true; message: string }> => {
   try {
     console.log('signin:', { email, password })
 
@@ -59,29 +89,32 @@ export const signin = async ({
       email,
       password
     })
+
     if (error) {
-      console.log('error', error)
-      return { error: JSON.stringify(error) }
+      throw new Error(error.message)
     }
-    if (!data) return { error: 'data is undefined' }
-    console.log('signin成功', { data })
+
+    return { success: true, message: 'ログインしました' }
   } catch (error) {
-    return { error: JSON.stringify(error) }
+    console.error('signin error:', error)
+    throw new Error(
+      error instanceof Error ? error.message : '不明なエラーが発生しました'
+    )
   }
-  redirect(AFTER_SIGNIN_PATH)
 }
 
 export const signOut = async (): Promise<{
-  error?: string
+  success: true
+  message: string
 }> => {
   try {
     await createClient().auth.signOut()
-    console.log('signOut成功')
+    return { success: true, message: 'ログアウトしました' }
   } catch (error) {
-    console.error('signOut error', error)
-    return { error: JSON.stringify(error) }
+    throw new Error(
+      error instanceof Error ? error.message : '不明なエラーが発生しました'
+    )
   }
-  redirect(AFTER_SIGNOUT_PATH)
 }
 
 export const changeEmail = async (
@@ -97,12 +130,14 @@ export const changeEmail = async (
     })
     if (error) {
       console.log('changeEmail error', error)
-      return { error: JSON.stringify(error) }
+      throw new Error(error.message)
     }
     console.log('changeEmail成功', { email })
   } catch (error) {
-    console.error('changeEmail error', error)
-    return { error: JSON.stringify(error) }
+    console.error('changeEmail error:', error)
+    throw new Error(
+      error instanceof Error ? error.message : '不明なエラーが発生しました'
+    )
   }
   return {}
 }
@@ -122,12 +157,14 @@ export const changePassword = async (
     })
     if (error) {
       console.log('changePassword error', error)
-      return { error: JSON.stringify(error) }
+      throw new Error(error.message)
     }
     console.log('changePassword成功')
   } catch (error) {
     console.error('changePassword error', error)
-    return { error: JSON.stringify(error) }
+    throw new Error(
+      error instanceof Error ? error.message : '不明なエラーが発生しました'
+    )
   }
   return {}
 }
@@ -145,12 +182,14 @@ export const resetPassword = async (
     const { error } = await createClient().auth.resetPasswordForEmail(email)
     if (error) {
       console.log('resetPassword error', error)
-      return { error: JSON.stringify(error) }
+      throw new Error(error.message)
     }
     console.log('resetPassword成功', { email })
   } catch (error) {
     console.error('resetPassword error', error)
-    return { error: JSON.stringify(error) }
+    throw new Error(
+      error instanceof Error ? error.message : '不明なエラーが発生しました'
+    )
   }
   return {}
 }

@@ -23,19 +23,25 @@ model User {
   entries  Entry[]
 }
 
+enum ProjectStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+}
+
 model Project {
-  id          String  @id @default(uuid())
+  id          String   @id @default(cuid())
   title       String
   description String?
   price       Int?
   deadline    DateTime?
+  status ProjectStatus @default(PENDING)
   created_at  DateTime @default(now())
-  creator     User     @relation(fields: [creator_id], references: [id], onDelete: Cascade)
   creator_id  String
-  entries     Entry[]
+  creator     User     @relation(fields: [creator_id], references: [id])
   skills      ProjectSkill[]
+  entries     Entry[]
 }
-
 model Skill {
   id   String  @id @default(uuid())
   name String  @unique

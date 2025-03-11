@@ -1,5 +1,5 @@
 'use client'
-import React, { useState } from 'react'
+import React from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -32,7 +32,6 @@ type AdminSignInFormData = z.infer<typeof adminSignInSchema>
 
 export function AdminSigninForm() {
   const router = useRouter()
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const {
     register,
     handleSubmit,
@@ -40,32 +39,29 @@ export function AdminSigninForm() {
   } = useForm<AdminSignInFormData>({ resolver: zodResolver(adminSignInSchema) })
 
   const onAdminSignInSubmit = async (data: AdminSignInFormData) => {
-    setErrorMessage(null)
     try {
-      await signin(data)
-      router.push('/admin/projects')
+      const result = await signin(data)
+      if (result.success) {
+        alert(result.message)
+        router.push('/admin/projects')
+      }
     } catch (error) {
       console.error('ログインエラー:', error)
-      setErrorMessage(
-        'ログインに失敗しました。メールアドレスとパスワードを確認してください。'
-      )
+      if (error instanceof Error) {
+        alert(error.message)
+      } else if (error && typeof error === 'object' && 'message' in error) {
+        alert(error.message as string)
+      } else {
+        alert(
+          'ログインに失敗しました。メールアドレスとパスワードを確認してください。'
+        )
+      }
     }
   }
 
   return (
-    <Container
-      size="100%"
-      my={80}
-      className="form-container flex justify-center items-center h-screen"
-    >
-      <Card
-        withBorder
-        shadow="sm"
-        radius="md"
-        padding="xl"
-        className="card"
-        style={{ maxWidth: '500px', margin: '0 auto' }}
-      >
+    <Container size={500} my={80} className="form-container">
+      <Card withBorder shadow="sm" radius="md" padding="xl" className="card">
         <Title
           order={3}
           className="title"
@@ -74,15 +70,6 @@ export function AdminSigninForm() {
           管理者ログイン
         </Title>
         <Divider my="lg" />
-
-        {errorMessage && (
-          <Text
-            className="form-error"
-            style={{ textAlign: 'center', color: 'red', marginBottom: '12px' }}
-          >
-            {errorMessage}
-          </Text>
-        )}
 
         <form onSubmit={handleSubmit(onAdminSignInSubmit)}>
           <Stack>

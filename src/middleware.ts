@@ -5,17 +5,13 @@ import {
   NEXT_PUBLIC_SUPABASE_URL,
   NEXT_PUBLIC_SUPABASE_ANON_KEY
 } from '../util/env'
-// import {
-//   LOGINED_CHECK_FAILED_REDIRECT_URL,
-//   isLoginedCheckUrl
-// } from './const/config'
 import { createServerClient } from '@supabase/ssr'
 import { CookieOptionsBase } from '~/lib/supabase/cookie'
 
 /**
  * Next.js middleware
  * Supabaseのセッションを更新する
- * */
+ */
 export const config = {
   matcher: [
     /*
@@ -27,6 +23,7 @@ export const config = {
     '/((?!_next/static|_next/image|favicon.ico).*)'
   ]
 }
+
 export async function middleware(req: NextRequest) {
   !isProd && console.log('middleware', req.url)
 
@@ -46,17 +43,13 @@ export async function updateSession(req: NextRequest) {
       NEXT_PUBLIC_SUPABASE_ANON_KEY,
       {
         cookies: {
-          getAll: async () => {
-            return req.cookies.getAll()
-          },
+          getAll: async () => req.cookies.getAll(),
           setAll: async (cookiesToSet) => {
             for (const cookie of cookiesToSet) {
               req.cookies.set(cookie.name, cookie.value)
             }
 
-            res = NextResponse.next({
-              request: req
-            })
+            res = NextResponse.next({ request: req })
 
             for (const cookie of cookiesToSet) {
               res.cookies.set(cookie.name, cookie.value, cookie.options)
@@ -67,23 +60,48 @@ export async function updateSession(req: NextRequest) {
       }
     )
 
-    // ログイン済みチェックが必要な場合は実装する
-    // const { error } = await supabase.auth.getUser()
-    // if (isLoginedCheckUrl(req.nextUrl.pathname) && error) {
-    //   console.log("redirect to '/signin'")
-    //   const redirectUrl = req.nextUrl.clone()
-    //   redirectUrl.pathname = LOGINED_CHECK_FAILED_REDIRECT_URL
-    //   redirectUrl.searchParams.set('redirectedFrom', req.nextUrl.pathname)
+    const {
+      data: { session }
+    } = await supabase.auth.getSession()
 
-    //   return NextResponse.redirect(redirectUrl)
-    // }
+    // ✅ 未認証ユーザーのリダイレクト
+    if (!session) {
+      if (req.nextUrl.pathname.startsWith('/admin/projects')) {
+        return NextResponse.redirect(new URL('/admin/signin', req.url))
+      }
+      if (
+        req.nextUrl.pathname.startsWith('/projects') ||
+        req.nextUrl.pathname.startsWith('/entry-list')
+      ) {
+        return NextResponse.redirect(new URL('/', req.url))
+      }
+    }
+
+    // ✅ 認証済みユーザーのリダイレクト
+    if (
+      session &&
+      (req.nextUrl.pathname === '/' ||
+        req.nextUrl.pathname === '/signup' ||
+        req.nextUrl.pathname === '/signin')
+    ) {
+      const { data: user, error } = await supabase.auth.getUser()
+      if (error) {
+        console.error('Failed to get user:', error)
+        return res
+      }
+
+      const role = user?.user?.user_metadata?.role
+      if (role === 'ADMIN') {
+        return NextResponse.redirect(new URL('/admin/projects', req.url))
+      }
+      if (role === 'USER') {
+        return NextResponse.redirect(new URL('/projects', req.url))
+      }
+    }
 
     return res
   } catch (e) {
-    return NextResponse.next({
-      request: {
-        headers: req.headers
-      }
-    })
+    console.error('Error in middleware:', e)
+    return NextResponse.next({ request: { headers: req.headers } })
   }
 }

@@ -5,6 +5,7 @@ import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { signup } from '@/serverActions/supabaseAuth'
+import { notifications } from '@mantine/notifications'
 import { useRouter } from 'next/navigation'
 import {
   Card,
@@ -17,7 +18,8 @@ import {
   Group,
   Divider,
   Text,
-  Loader
+  Loader,
+  Notification
 } from '@mantine/core'
 
 const signupSchema = z
@@ -42,21 +44,45 @@ type SignupFormData = z.infer<typeof signupSchema>
 
 export function SignupForm() {
   const router = useRouter()
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting }
   } = useForm<SignupFormData>({ resolver: zodResolver(signupSchema) })
 
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+
   const onSignupSubmit = async (data: SignupFormData) => {
     setErrorMessage(null)
+    setSuccessMessage(null)
     try {
       await signup(data)
-      router.push('/projects')
+
+      setSuccessMessage('アカウントが作成されました。')
+      notifications.show({
+        title: '登録成功',
+        message: 'アカウントが作成されました。',
+        color: 'green',
+        autoClose: 3000
+      })
+      setTimeout(() => {
+        router.push('/projects')
+      }, 1000)
     } catch (error) {
       console.error('登録エラー:', error)
-      setErrorMessage('登録に失敗しました。もう一度お試しください。')
+
+      const errorMsg =
+        error instanceof Error
+          ? error.message
+          : `登録に失敗しました。もう一度お試しください。 ${error}`
+      setErrorMessage(errorMsg)
+      notifications.show({
+        title: '登録エラー',
+        message: errorMsg,
+        color: 'red',
+        autoClose: 3000
+      })
     }
   }
   return (
@@ -70,15 +96,6 @@ export function SignupForm() {
           新規登録
         </Title>
         <Divider my="lg" />
-
-        {errorMessage && (
-          <Text
-            className="form-error"
-            style={{ textAlign: 'center', color: 'red', marginBottom: '12px' }}
-          >
-            {errorMessage}
-          </Text>
-        )}
 
         <form onSubmit={handleSubmit(onSignupSubmit)}>
           <Stack>
@@ -134,6 +151,26 @@ export function SignupForm() {
           </Link>
         </Text>
       </Card>
+      {successMessage && (
+        <Notification
+          color="green"
+          onClose={() => setSuccessMessage(null)}
+          mt="md"
+          style={{ maxWidth: '500px', margin: '20px auto 0' }}
+        >
+          {successMessage}
+        </Notification>
+      )}
+      {errorMessage && (
+        <Notification
+          color="red"
+          onClose={() => setErrorMessage(null)}
+          mt="md"
+          style={{ maxWidth: '500px', margin: '20px auto 0' }}
+        >
+          {errorMessage}
+        </Notification>
+      )}
     </Container>
   )
 }

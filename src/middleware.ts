@@ -99,6 +99,17 @@ export async function updateSession(req: NextRequest) {
       }
     }
 
+    // アドミンでないユーザーが/adminにアクセスした場合、ログインページにリダイレクト
+    if (req.nextUrl.pathname.startsWith('/admin/projects')) {
+      const { data: user, error } = await supabase.auth.getUser()
+      if (user) {
+        const role = user?.user?.user_metadata?.role
+        if (role !== 'ADMIN') {
+          return NextResponse.redirect(new URL('/', req.url))
+        }
+      }
+    }
+
     return res
   } catch (e) {
     console.error('Error in middleware:', e)

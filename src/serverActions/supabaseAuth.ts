@@ -1,40 +1,39 @@
 'use server'
 
-import {
-  AFTER_SIGNIN_PATH,
-  AFTER_SIGNOUT_PATH,
-  AFTER_SIGNUP_FOR_DB_REGISTER_PATH
-} from '@/const/config'
+import { AFTER_SIGNOUT_PATH } from '@/const/config'
 import { redirect } from 'next/navigation'
 import { createClient } from '~/lib/supabase/server'
 import { serverApi } from '~/lib/trpc/server-api'
-import { AuthError, AuthApiError } from '@supabase/supabase-js'
-import { prisma } from '~/server/db'
+import { PrismaClient } from '@prisma/client'
 
-type SignupParams = {
+const prisma = new PrismaClient()
+
+type EmailAndPassword = {
   email: string
   password: string
-  name: string
-}
-
-type SigninParams = {
-  email: string
-  password: string
-}
-
-type SignupResponse = {
-  error?: string
-  code?: string
-  success?: boolean
 }
 
 export const signup = async ({
   email,
   password,
   name
-}: SignupParams): Promise<{ success: true; message: string }> => {
+}: EmailAndPassword & { name: string }): Promise<{
+  success?: boolean
+  message?: string
+  error?: string
+}> => {
   try {
     console.log('signup:', { email, password, name })
+
+    const existingUser = await prisma.user.findUnique({
+      where: { email }
+    })
+
+    if (existingUser) {
+      throw new Error(
+        'このメールアドレスは既に使用されています。別のメールアドレスを使用してください。'
+      )
+    }
 
     const authResponse = await createClient().auth.signUp({
       email,
@@ -45,35 +44,30 @@ export const signup = async ({
     })
 
     if (authResponse.error) {
-      throw new Error(authResponse.error.message)
+      throw new Error(
+        `サインアップ中にエラーが発生しました: ${authResponse.error.message}`
+      )
     }
 
     const user = authResponse.data.user
     if (!user?.id) {
-      throw new Error('ユーザーIDの取得に失敗しました')
+      throw new Error('ユーザーIDが取得できませんでした')
     }
 
-    const existingUser = await prisma.user.findUnique({
-      where: { id: user.id }
-    })
-    if (existingUser) {
-      throw new Error('このユーザーは既に登録されています')
-    }
-
-    await prisma.user.create({
-      data: {
-        id: user.id,
-        email: user.email ?? '',
-        name: name,
-        role: 'USER'
-      }
+    await serverApi().user.create({
+      id: user.id,
+      email: user.email ?? '',
+      name: name
     })
 
-    return { success: true, message: 'アカウントが作成されました' }
+    console.log('signup:', user.id)
+    return { success: true, message: 'アカウントが作成されました。' }
   } catch (error) {
-    console.error('signup error:', error)
+    console.error('signupエラー:', error)
     throw new Error(
-      error instanceof Error ? error.message : '不明なエラーが発生しました'
+      error instanceof Error
+        ? error.message
+        : 'サインアップ中に不明なエラーが発生しました'
     )
   }
 }
@@ -81,7 +75,11 @@ export const signup = async ({
 export const signin = async ({
   email,
   password
-}: SigninParams): Promise<{ success: true; message: string }> => {
+}: EmailAndPassword): Promise<{
+  success?: boolean
+  message?: string
+  error?: string
+}> => {
   try {
     console.log('signin:', { email, password })
 
@@ -91,30 +89,35 @@ export const signin = async ({
     })
 
     if (error) {
-      throw new Error(error.message)
+      throw new Error(`ログイン中にエラーが発生しました: ${error.message}`)
+    }
+    if (!data) {
+      throw new Error('ログインデータが取得できませんでした')
     }
 
-    return { success: true, message: 'ログインしました' }
+    console.log('ログイン成功:', { data })
+    return { success: true, message: 'ログインしました。' }
   } catch (error) {
-    console.error('signin error:', error)
+    console.error('signinエラー:', error)
     throw new Error(
-      error instanceof Error ? error.message : '不明なエラーが発生しました'
+      error instanceof Error
+        ? error.message
+        : 'ログイン中に不明なエラーが発生しました'
     )
   }
 }
 
 export const signOut = async (): Promise<{
-  success: true
-  message: string
+  error?: string
 }> => {
   try {
     await createClient().auth.signOut()
-    return { success: true, message: 'ログアウトしました' }
+    console.log('signOut成功')
   } catch (error) {
-    throw new Error(
-      error instanceof Error ? error.message : '不明なエラーが発生しました'
-    )
+    console.error('signOut error', error)
+    throw new Error('サインアウト中にエラーが発生しました')
   }
+  redirect(AFTER_SIGNOUT_PATH)
 }
 
 export const changeEmail = async (
@@ -130,14 +133,12 @@ export const changeEmail = async (
     })
     if (error) {
       console.log('changeEmail error', error)
-      throw new Error(error.message)
+      throw new Error('メールアドレス変更中にエラーが発生しました')
     }
     console.log('changeEmail成功', { email })
   } catch (error) {
-    console.error('changeEmail error:', error)
-    throw new Error(
-      error instanceof Error ? error.message : '不明なエラーが発生しました'
-    )
+    console.error('changeEmail error', error)
+    throw new Error('メールアドレス変更中に不明なエラーが発生しました')
   }
   return {}
 }
@@ -157,14 +158,12 @@ export const changePassword = async (
     })
     if (error) {
       console.log('changePassword error', error)
-      throw new Error(error.message)
+      throw new Error('パスワード変更中にエラーが発生しました')
     }
     console.log('changePassword成功')
   } catch (error) {
     console.error('changePassword error', error)
-    throw new Error(
-      error instanceof Error ? error.message : '不明なエラーが発生しました'
-    )
+    throw new Error('パスワード変更中に不明なエラーが発生しました')
   }
   return {}
 }
@@ -182,14 +181,12 @@ export const resetPassword = async (
     const { error } = await createClient().auth.resetPasswordForEmail(email)
     if (error) {
       console.log('resetPassword error', error)
-      throw new Error(error.message)
+      throw new Error('パスワードリセット中にエラーが発生しました')
     }
     console.log('resetPassword成功', { email })
   } catch (error) {
     console.error('resetPassword error', error)
-    throw new Error(
-      error instanceof Error ? error.message : '不明なエラーが発生しました'
-    )
+    throw new Error('パスワードリセット中に不明なエラーが発生しました')
   }
   return {}
 }

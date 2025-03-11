@@ -1,9 +1,10 @@
 'use client'
-import React from 'react'
+import React, { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { signin } from '@/serverActions/supabaseAuth'
+import { notifications } from '@mantine/notifications'
 import { useRouter } from 'next/navigation'
 import {
   Card,
@@ -15,8 +16,8 @@ import {
   Container,
   Group,
   Divider,
-  Text,
-  Loader
+  Loader,
+  Notification
 } from '@mantine/core'
 
 const adminSignInSchema = z.object({
@@ -32,6 +33,8 @@ type AdminSignInFormData = z.infer<typeof adminSignInSchema>
 
 export function AdminSigninForm() {
   const router = useRouter()
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const {
     register,
     handleSubmit,
@@ -39,23 +42,35 @@ export function AdminSigninForm() {
   } = useForm<AdminSignInFormData>({ resolver: zodResolver(adminSignInSchema) })
 
   const onAdminSignInSubmit = async (data: AdminSignInFormData) => {
+    setErrorMessage(null)
+    setSuccessMessage(null)
     try {
       const result = await signin(data)
-      if (result.success) {
-        alert(result.message)
-        router.push('/admin/projects')
+      if (!result.error) {
+        setSuccessMessage('管理者としてログインしました。')
+        notifications.show({
+          title: 'ログイン成功',
+          message: '管理者としてログインしました。',
+          color: 'green',
+          autoClose: 3000
+        })
+        setTimeout(() => {
+          router.push('/admin/projects')
+        }, 1000)
       }
     } catch (error) {
       console.error('ログインエラー:', error)
-      if (error instanceof Error) {
-        alert(error.message)
-      } else if (error && typeof error === 'object' && 'message' in error) {
-        alert(error.message as string)
-      } else {
-        alert(
-          'ログインに失敗しました。メールアドレスとパスワードを確認してください。'
-        )
-      }
+      const errorMsg =
+        error instanceof Error
+          ? error.message
+          : 'ログインに失敗しました。メールアドレスとパスワードを確認してください。'
+      setErrorMessage(errorMsg)
+      notifications.show({
+        title: 'ログインエラー',
+        message: errorMsg,
+        color: 'red',
+        autoClose: 3000
+      })
     }
   }
 
@@ -97,6 +112,26 @@ export function AdminSigninForm() {
           </Stack>
         </form>
       </Card>
+      {successMessage && (
+        <Notification
+          color="green"
+          onClose={() => setSuccessMessage(null)}
+          mt="md"
+          style={{ maxWidth: '500px', margin: '20px auto 0' }}
+        >
+          {successMessage}
+        </Notification>
+      )}
+      {errorMessage && (
+        <Notification
+          color="red"
+          onClose={() => setErrorMessage(null)}
+          mt="md"
+          style={{ maxWidth: '500px', margin: '20px auto 0' }}
+        >
+          {errorMessage}
+        </Notification>
+      )}
     </Container>
   )
 }

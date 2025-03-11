@@ -5,6 +5,7 @@ import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { signin } from '@/serverActions/supabaseAuth'
+import { notifications } from '@mantine/notifications'
 import { useRouter } from 'next/navigation'
 import {
   Card,
@@ -17,7 +18,8 @@ import {
   Group,
   Divider,
   Text,
-  Loader
+  Loader,
+  Notification
 } from '@mantine/core'
 
 const signInSchema = z.object({
@@ -34,6 +36,7 @@ type SignInFormData = z.infer<typeof signInSchema>
 export function SigninForm() {
   const router = useRouter()
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const {
     register,
     handleSubmit,
@@ -42,19 +45,41 @@ export function SigninForm() {
 
   const onSignInSubmit = async (data: SignInFormData) => {
     setErrorMessage(null)
+    setSuccessMessage(null)
     try {
-      await signin(data)
-      router.push('/projects')
+      const result = await signin(data)
+      if (result.success) {
+        setSuccessMessage('ログインしました。')
+        notifications.show({
+          title: 'ログイン成功',
+          message: 'ログインしました。',
+          color: 'green',
+          autoClose: 3000
+        })
+        setTimeout(() => {
+          router.push('/projects')
+        }, 1000)
+      } else {
+        throw new Error(result.error || 'ログインに失敗しました。')
+      }
     } catch (error) {
       console.error('ログインエラー:', error)
-      setErrorMessage(
-        'ログインに失敗しました。メールアドレスとパスワードを確認してください。'
-      )
+      const errorMsg =
+        error instanceof Error
+          ? error.message
+          : 'ログインに失敗しました。メールアドレスとパスワードを確認してください。'
+      setErrorMessage(errorMsg)
+      notifications.show({
+        title: 'ログインエラー',
+        message: errorMsg,
+        color: 'red',
+        autoClose: 3000
+      })
     }
   }
 
   return (
-    <Container size="100%" my={40} className="form-container">
+    <Container size={500} my={40} className="form-container">
       <Card
         withBorder
         shadow="sm"
@@ -70,15 +95,6 @@ export function SigninForm() {
         >
           ログイン
         </Title>
-
-        {errorMessage && (
-          <Text
-            className="form-error"
-            style={{ textAlign: 'center', color: 'red', marginBottom: '12px' }}
-          >
-            {errorMessage}
-          </Text>
-        )}
 
         <Divider my="lg" />
         <form onSubmit={handleSubmit(onSignInSubmit)}>
@@ -115,6 +131,26 @@ export function SigninForm() {
           </Link>
         </Text>
       </Card>
+      {successMessage && (
+        <Notification
+          color="green"
+          onClose={() => setSuccessMessage(null)}
+          mt="md"
+          style={{ maxWidth: '500px', margin: '20px auto 0' }}
+        >
+          {successMessage}
+        </Notification>
+      )}
+      {errorMessage && (
+        <Notification
+          color="red"
+          onClose={() => setErrorMessage(null)}
+          mt="md"
+          style={{ maxWidth: '500px', margin: '20px auto 0' }}
+        >
+          {errorMessage}
+        </Notification>
+      )}
     </Container>
   )
 }

@@ -79,23 +79,27 @@ export function SigninForm() {
   }
 
   return (
-    <Container size={500} my={40} className="form-container">
+    <Container
+      size={500}
+      my={40}
+      className="form-container"
+      style={{ padding: '0 20px' }}
+    >
+      <Title
+        order={3}
+        className="title"
+        style={{ textAlign: 'center', color: '#5a5a5a', marginBottom: '40px' }}
+      >
+        ログイン
+      </Title>
       <Card
         withBorder
         shadow="sm"
         radius="md"
         padding="xl"
         className="card"
-        style={{ maxWidth: '500px', margin: '0 auto' }}
+        style={{ width: '100%', maxWidth: '500px', margin: '0 auto' }}
       >
-        <Title
-          order={3}
-          className="title"
-          style={{ textAlign: 'center', color: '#5a5a5a' }}
-        >
-          ログイン
-        </Title>
-
         <Divider my="lg" />
         <form onSubmit={handleSubmit(onSignInSubmit)}>
           <Stack>

@@ -47,13 +47,13 @@ export function AdminSigninForm() {
     try {
       const result = await signin(data)
       if (!result.error) {
-        setSuccessMessage('管理者としてログインしました。')
-        notifications.show({
-          title: 'ログイン成功',
-          message: '管理者としてログインしました。',
-          color: 'green',
-          autoClose: 3000
-        })
+        // setSuccessMessage('管理者としてログインしました。')
+        // notifications.show({
+        //   title: 'ログイン成功',
+        //   message: '管理者としてログインしました。',
+        //   color: 'green',
+        //   autoClose: 3000
+        // })
         setTimeout(() => {
           router.push('/admin/projects')
         }, 1000)
@@ -75,15 +75,27 @@ export function AdminSigninForm() {
   }
 
   return (
-    <Container size={500} my={80} className="form-container">
-      <Card withBorder shadow="sm" radius="md" padding="xl" className="card">
-        <Title
-          order={3}
-          className="title"
-          style={{ textAlign: 'center', color: '#5a5a5a' }}
-        >
-          管理者ログイン
-        </Title>
+    <Container
+      size={500}
+      my={80}
+      className="form-container"
+      style={{ padding: '0 20px' }}
+    >
+      <Title
+        order={3}
+        className="title"
+        style={{ textAlign: 'center', color: '#5a5a5a', marginBottom: '40px' }}
+      >
+        管理者ログイン
+      </Title>
+      <Card
+        withBorder
+        shadow="sm"
+        radius="md"
+        padding="xl"
+        className="card"
+        style={{ width: '100%', maxWidth: '500px', margin: '0 auto' }}
+      >
         <Divider my="lg" />
 
         <form onSubmit={handleSubmit(onAdminSignInSubmit)}>

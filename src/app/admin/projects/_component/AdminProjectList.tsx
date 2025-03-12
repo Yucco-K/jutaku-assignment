@@ -1,36 +1,89 @@
 'use client'
-import React, { useState, useEffect } from 'react'
-import { Table, Button, Modal, Title, Text, Group } from '@mantine/core'
+import React, { useState } from 'react'
+import { Table, Button, Modal, Title, Text, Group, Loader } from '@mantine/core'
 import { useRouter } from 'next/navigation'
-import useProjectStore from '@/store/projectStore' // ✅ Zustand のストアをインポート
 import type { RouteLiteral } from 'nextjs-routes'
+import { clientApi } from '~/lib/trpc/client-api'
+import { useMediaQuery } from '@mantine/hooks'
+import BackButton from '@/app/_components/BackButton'
 
 export const AdminProjectList = () => {
   const router = useRouter()
-  const { projects, loadProjects, deleteProject } = useProjectStore()
+  const isMobile = useMediaQuery('(max-width: 768px)')
   const [opened, setOpened] = useState(false)
   const [selectedProject, setSelectedProject] = useState<{
     id: string
-    date: string
-    name: string
-    description: string
-    skills: string[]
+    title: string
+    description: string | null
+    created_at: string
+    creator_id: string
+    price: number | null
+    deadline: string | null
   } | null>(null)
 
-  // ✅ 初回レンダリング時にローカルストレージのデータをロード
-  useEffect(() => {
-    loadProjects()
-  }, [])
+  // tRPCを使用してプロジェクト一覧を取得
+  const { data: projects = [], isLoading } =
+    clientApi.project.list.useQuery<
+      {
+        id: string
+        created_at: string
+        title: string
+        description: string | null
+        price: number | null
+        deadline: string | null
+        creator_id: string
+        skills: Array<{
+          skill: {
+            id: string
+            name: string
+          }
+        }>
+      }[]
+    >()
+
+  const utils = clientApi.useUtils()
+
+  // プロジェクトIDに紐づくスキルを取得する関数
+  const getProjectSkills = (project: {
+    skills?: Array<{
+      skill: {
+        name: string
+      }
+    }>
+  }) => {
+    return project.skills?.map((s) => s.skill.name).join(', ') || '-'
+  }
+
+  // プロジェクト削除のミューテーション
+  const deleteMutation = clientApi.project.delete.useMutation({
+    onSuccess: () => {
+      setOpened(false)
+      // キャッシュを更新するためにクエリを無効化
+      utils.project.list.invalidate()
+    }
+  })
 
   const openModal = (project: {
     id: string
-    date: string
-    name: string
-    description: string
-    skills: string[]
+    title: string
+    description: string | null
+    created_at: string
+    creator_id: string
+    price: number | null
+    deadline: string | null
   }) => {
     setSelectedProject(project)
     setOpened(true)
+  }
+
+  if (isLoading) {
+    return (
+      <div
+        style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}
+      >
+        <Loader size="xl" />
+      </div>
+    )
   }
 
   return (
@@ -146,7 +199,7 @@ export const AdminProjectList = () => {
                       padding: '12px'
                     }}
                   >
-                    {project.date}
+                    {new Date(project.created_at).toLocaleDateString()}
                   </Table.Td>
                   <Table.Td
                     style={{
@@ -157,7 +210,7 @@ export const AdminProjectList = () => {
                       padding: '12px'
                     }}
                   >
-                    {project.name}
+                    {project.title}
                   </Table.Td>
                   <Table.Td
                     style={{
@@ -168,7 +221,7 @@ export const AdminProjectList = () => {
                       padding: '12px'
                     }}
                   >
-                    {project.description}
+                    {project.description || ''}
                   </Table.Td>
                   <Table.Td
                     style={{
@@ -179,7 +232,7 @@ export const AdminProjectList = () => {
                       padding: '12px'
                     }}
                   >
-                    {project.skills.join(', ')}
+                    {getProjectSkills(project)}
                   </Table.Td>
                   <Table.Td
                     style={{
@@ -188,14 +241,25 @@ export const AdminProjectList = () => {
                       padding: '12px'
                     }}
                   >
-                    <Group gap="sm" justify="center" className="button-group">
+                    <Group
+                      gap="xs"
+                      justify="center"
+                      wrap="nowrap"
+                      style={{
+                        minWidth: 'max-content',
+                        maxWidth: '225px',
+                        margin: '0 auto'
+                      }}
+                    >
                       <Button
                         color="blue"
-                        size="xs"
+                        size="sm"
                         style={{
-                          flex: 1,
-                          minWidth: '30px',
-                          fontSize: '0.8rem'
+                          flex: '1 0 auto',
+                          minWidth: '45px',
+                          maxWidth: '67.5px',
+                          padding: '4px 12px',
+                          fontSize: '0.85rem'
                         }}
                         onClick={() =>
                           router.push(
@@ -207,11 +271,13 @@ export const AdminProjectList = () => {
                       </Button>
                       <Button
                         color="blue"
-                        size="xs"
+                        size="sm"
                         style={{
-                          flex: 1,
-                          minWidth: '30px',
-                          fontSize: '0.8rem'
+                          flex: '1 0 auto',
+                          minWidth: '45px',
+                          maxWidth: '67.5px',
+                          padding: '4px 12px',
+                          fontSize: '0.85rem'
                         }}
                         onClick={() =>
                           router.push(
@@ -223,11 +289,17 @@ export const AdminProjectList = () => {
                       </Button>
                       <Button
                         color="red"
-                        size="xs"
+                        size="sm"
                         style={{
-                          flex: 1,
-                          minWidth: '30px',
-                          fontSize: '0.8rem'
+                          flex: '1 0 auto',
+                          minWidth: '45px',
+                          maxWidth: '67.5px',
+                          padding: '4px 12px',
+                          fontSize: '0.85rem',
+                          backgroundColor: '#FF6B6B',
+                          '&:hover': {
+                            backgroundColor: '#FF5252'
+                          }
                         }}
                         onClick={() => openModal(project)}
                       >
@@ -256,17 +328,27 @@ export const AdminProjectList = () => {
         centered
         className="modal-content"
       >
-        <Text>この案件を削除します。よろしいですか？</Text>
-        <Group justify="flex-end" gap="sm" mt="md" className="modal-footer">
+        <Text
+          style={{ textAlign: 'center', fontSize: '1.2rem', marginTop: '40px' }}
+        >
+          この案件を削除します。よろしいですか？
+        </Text>
+        <Group justify="center" gap="sm" mt="xl" className="modal-footer">
           <Button
             color="red"
             mt="md"
-            onClick={() => {
-              if (selectedProject) {
-                deleteProject(selectedProject.id)
-                setOpened(false)
+            style={{
+              backgroundColor: '#FF6B6B',
+              '&:hover': {
+                backgroundColor: '#FF5252'
               }
             }}
+            onClick={() => {
+              if (selectedProject) {
+                deleteMutation.mutate(selectedProject.id)
+              }
+            }}
+            loading={deleteMutation.isLoading}
           >
             はい
           </Button>

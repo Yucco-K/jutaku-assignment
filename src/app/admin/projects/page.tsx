@@ -1,3 +1,10 @@
-export default function AdminProjects() {
-  return <>管理者向けプロジェクト一覧ページ</>
+import React from 'react'
+import { AdminProjectList } from './_component/AdminProjectList'
+
+export default function Page() {
+  return (
+    <main>
+      <AdminProjectList />
+    </main>
+  )
 }

@@ -1,7 +1,8 @@
 'use client'
-import React, { useEffect, useState } from 'react'
-import { Table, Button, Title } from '@mantine/core'
+import React, { useState, useEffect } from 'react'
+import { Table, Button, Modal, Title, Text, Group } from '@mantine/core'
 import { useRouter } from 'next/navigation'
+import useProjectStore from '@/store/projectStore' // ✅ Zustand のストアをインポート
 import type { RouteLiteral } from 'nextjs-routes'
 
 // 日付フォーマット用のヘルパー関数
@@ -13,31 +14,32 @@ const formatDate = (dateString: string) => {
   return `${year}/${month}/${day}`
 }
 
-export const ProjectList = () => {
+export const AdminProjectList = () => {
   const router = useRouter()
-  const [projects, setProjects] = useState<
-    {
-      id: number
-      date: string
-      name: string
-      description: string
-      skills: string
-    }[]
-  >([])
+  const { projects, loadProjects, deleteProject } = useProjectStore()
+  const [opened, setOpened] = useState(false)
+  const [selectedProject, setSelectedProject] = useState<{
+    id: string
+    date: string
+    name: string
+    description: string
+    skills: string[]
+  } | null>(null)
 
-  // 初回レンダリング時に localStorage からデータを読み込む
+  // ✅ 初回レンダリング時にローカルストレージのデータをロード
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const storedProjects = localStorage.getItem('projects')
-      if (storedProjects) {
-        setProjects(JSON.parse(storedProjects))
-      }
-    }
+    loadProjects()
   }, [])
 
-  // 案件詳細ページへの遷移処理
-  const handleProjectDetail = (projectId: number) => {
-    router.push(`/projects/${projectId}` as RouteLiteral)
+  const openModal = (project: {
+    id: string
+    date: string
+    name: string
+    description: string
+    skills: string[]
+  }) => {
+    setSelectedProject(project)
+    setOpened(true)
   }
 
   return (
@@ -48,7 +50,8 @@ export const ProjectList = () => {
         style={{
           textAlign: 'center',
           color: '#5a5a5a',
-          marginBottom: '44px'
+          marginTop: '32px',
+          marginBottom: '36px'
         }}
       >
         案件一覧
@@ -72,9 +75,9 @@ export const ProjectList = () => {
             minWidth: '200px',
             marginRight: '20px'
           }}
-          onClick={() => router.push('/entry-list')}
+          onClick={() => router.push('/admin/projects/new')}
         >
-          エントリー 一覧
+          新規案件作成
         </Button>
       </div>
       <div className="table-container">
@@ -127,12 +130,12 @@ export const ProjectList = () => {
                   padding: '12px'
                 }}
               >
-                必要なスキル
+                必要スキル
               </Table.Th>
               <Table.Th
                 style={{
                   textAlign: 'center',
-                  width: '120px',
+                  width: '300px',
                   border: '1px solid #e0e0e0',
                   padding: '12px'
                 }}
@@ -185,26 +188,61 @@ export const ProjectList = () => {
                       padding: '12px'
                     }}
                   >
-                    {Array.isArray(project.skills)
-                      ? project.skills.join(', ')
-                      : project.skills}
+                    {project.skills.join(', ')}
                   </Table.Td>
                   <Table.Td
                     style={{
-                      width: '120px',
+                      width: '300px',
                       border: '1px solid #e0e0e0',
                       padding: '12px'
                     }}
                   >
-                    <Button
-                      color="blue"
-                      size="xs"
-                      className="button-group"
-                      style={{ flex: 1, minWidth: '30px', fontSize: '0.8rem' }}
-                      onClick={() => handleProjectDetail(project.id)}
-                    >
-                      詳細
-                    </Button>
+                    <Group gap="sm" justify="center" className="button-group">
+                      <Button
+                        color="blue"
+                        size="xs"
+                        style={{
+                          flex: 1,
+                          minWidth: '30px',
+                          fontSize: '0.8rem'
+                        }}
+                        onClick={() =>
+                          router.push(
+                            `/admin/projects/${project.id}` as RouteLiteral
+                          )
+                        }
+                      >
+                        詳細
+                      </Button>
+                      <Button
+                        color="blue"
+                        size="xs"
+                        style={{
+                          flex: 1,
+                          minWidth: '30px',
+                          fontSize: '0.8rem'
+                        }}
+                        onClick={() =>
+                          router.push(
+                            `/admin/projects/${project.id}/edit` as RouteLiteral
+                          )
+                        }
+                      >
+                        編集
+                      </Button>
+                      <Button
+                        color="red"
+                        size="xs"
+                        style={{
+                          flex: 1,
+                          minWidth: '30px',
+                          fontSize: '0.8rem'
+                        }}
+                        onClick={() => openModal(project)}
+                      >
+                        削除
+                      </Button>
+                    </Group>
                   </Table.Td>
                 </Table.Tr>
               ))
@@ -221,6 +259,32 @@ export const ProjectList = () => {
           </Table.Tbody>
         </Table>
       </div>
+      <Modal
+        opened={opened}
+        onClose={() => setOpened(false)}
+        centered
+        className="modal-content"
+      >
+        <Text>この案件を削除します。よろしいですか？</Text>
+        <Group justify="flex-end" gap="sm" mt="md" className="modal-footer">
+          <Button
+            color="red"
+            mt="md"
+            onClick={() => {
+              if (selectedProject) {
+                deleteProject(selectedProject.id)
+                setOpened(false)
+              }
+            }}
+          >
+            はい
+          </Button>
+
+          <Button variant="default" mt="md" onClick={() => setOpened(false)}>
+            いいえ
+          </Button>
+        </Group>
+      </Modal>
     </>
   )
 }

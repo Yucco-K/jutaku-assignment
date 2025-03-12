@@ -50,7 +50,7 @@ async function main() {
     prisma.project.create({
       data: {
         title: 'Webアプリ開発',
-        overview: 'Reactを用いた開発案件',
+        description: 'Reactを用いた開発案件',
         price: 500000,
         deadline: new Date('2025-04-01'),
         created_at: new Date(),
@@ -60,7 +60,7 @@ async function main() {
     prisma.project.create({
       data: {
         title: 'モバイルアプリ開発',
-        overview: 'iOS/Androidアプリの開発',
+        description: 'iOS/Androidアプリの開発',
         price: 800000,
         deadline: new Date('2025-05-01'),
         created_at: new Date(),
@@ -70,7 +70,7 @@ async function main() {
     prisma.project.create({
       data: {
         title: 'PHPシステム開発',
-        overview: 'PHPを用いたシステム構築',
+        description: 'PHPを用いたシステム構築',
         price: 600000,
         deadline: new Date('2025-06-01'),
         created_at: new Date(),
@@ -80,7 +80,7 @@ async function main() {
     prisma.project.create({
       data: {
         title: 'Javaアプリ開発',
-        overview: 'Javaによる業務アプリ開発',
+        description: 'Javaによる業務アプリ開発',
         price: 700000,
         deadline: new Date('2025-07-01'),
         created_at: new Date(),

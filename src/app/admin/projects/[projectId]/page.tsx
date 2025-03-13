@@ -343,6 +343,11 @@ export default function AdminProjectDetail() {
                                 }
                                 data={SELECTABLE_STATUSES}
                                 placeholder="ステータスを選択"
+                                styles={{
+                                  dropdown: {
+                                    zIndex: 1003
+                                  }
+                                }}
                               />
                             )}
                           {(entry.status === 'APPROVED' ||

@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import type { RouteLiteral } from 'nextjs-routes'
 import { clientApi } from '~/lib/trpc/client-api'
 import { useMediaQuery } from '@mantine/hooks'
-import BackButton from '@/app/_components/BackButton'
 
 export const AdminProjectList = () => {
   const router = useRouter()

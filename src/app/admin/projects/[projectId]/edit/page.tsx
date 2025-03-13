@@ -27,7 +27,18 @@ const schema = z.object({
   skillNames: z
     .array(z.string())
     .min(1, '必要なスキルは1つ以上選択してください'),
-  deadline: z.string().min(1, '募集締切日は必須です'),
+  deadline: z
+    .string()
+    .min(1, '募集締切日は必須です')
+    .refine(
+      (date) => {
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        const inputDate = new Date(date)
+        return inputDate >= today
+      },
+      { message: '募集締切日は今日以降の日付を選択してください' }
+    ),
   price: z.string().min(1, '単価は必須です')
 })
 
@@ -112,8 +123,16 @@ export default function EditProject() {
 
   if (isProjectLoading) {
     return (
-      <div style={{ textAlign: 'center', marginTop: '50px' }}>
-        <Loader size="xl" color="blue" />
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: 'calc(100vh - 60px)',
+          width: '100%'
+        }}
+      >
+        <Loader size="xl" />
         <Text mt="md">データを読み込んでいます...</Text>
       </div>
     )
@@ -211,6 +230,7 @@ export default function EditProject() {
                 </span>
               }
               type="date"
+              min={new Date().toISOString().split('T')[0]}
               {...register('deadline')}
               error={errors.deadline?.message}
               size="md"
@@ -251,7 +271,17 @@ export default function EditProject() {
         opened={modalOpened}
         onClose={() => setModalOpened(false)}
         centered
-        className="modal-content"
+        styles={{
+          overlay: {
+            zIndex: 1001
+          },
+          inner: {
+            zIndex: 1002
+          },
+          content: {
+            zIndex: 1002
+          }
+        }}
       >
         <Text
           style={{ textAlign: 'center', fontSize: '1.2rem', marginTop: '40px' }}

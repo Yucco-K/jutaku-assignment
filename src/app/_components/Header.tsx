@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Menu, Avatar, Group, Text, ActionIcon } from '@mantine/core'
-import { FaUserCircle, FaSignOutAlt } from 'react-icons/fa'
+import { Text } from '@mantine/core'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { notifications } from '@mantine/notifications'
 import { signOut } from '@/serverActions/supabaseAuth'
@@ -31,31 +30,31 @@ export const Header = () => {
     getSession()
   }, [supabase.auth])
 
-  const handleLogout = async () => {
-    try {
-      await signOut()
+  // const handleLogout = async () => {
+  //   try {
+  //     await signOut()
 
-      notifications.show({
-        title: '成功',
-        message: 'ログアウトに成功しました',
-        color: 'green',
-        autoClose: 3000,
-        withBorder: true
-      })
+  //     notifications.show({
+  //       title: '成功',
+  //       message: 'ログアウトに成功しました',
+  //       color: 'green',
+  //       autoClose: 3000,
+  //       withBorder: true
+  //     })
 
-      router.push('/')
-    } catch (error) {
-      console.error('❌ ログアウトエラー:', error)
-      notifications.show({
-        title: 'エラー',
-        message:
-          error instanceof Error ? error.message : 'ログアウトに失敗しました',
-        color: 'red',
-        autoClose: 5000,
-        withBorder: true
-      })
-    }
-  }
+  //     router.push('/')
+  //   } catch (error) {
+  //     console.error('❌ ログアウトエラー:', error)
+  //     notifications.show({
+  //       title: 'エラー',
+  //       message:
+  //         error instanceof Error ? error.message : 'ログアウトに失敗しました',
+  //       color: 'red',
+  //       autoClose: 5000,
+  //       withBorder: true
+  //     })
+  //   }
+  // }
 
   return (
     <header

@@ -82,14 +82,9 @@ export default function AdminProjectDetail() {
       user: { id: string; name: string }
     }[]
   >({
-    projectId: params?.projectId as string
+    projectId: params?.projectId as string,
+    status: selectedStatus === 'ALL' ? undefined : selectedStatus
   })
-
-  // フィルタリングされたエントリーを取得
-  const filteredEntries =
-    selectedStatus === 'ALL'
-      ? entries
-      : entries.filter((entry) => entry.status === selectedStatus)
 
   // プロジェクト削除のミューテーション
   const deleteMutation = clientApi.project.delete.useMutation({
@@ -308,6 +303,11 @@ export default function AdminProjectDetail() {
             data={STATUS_OPTIONS}
             leftSection={<FaFilter />}
             style={{ width: '200px' }}
+            styles={{
+              dropdown: {
+                zIndex: 1003
+              }
+            }}
           />
         </Group>
         <Table>
@@ -315,18 +315,18 @@ export default function AdminProjectDetail() {
             <Table.Tr>
               <Table.Th>エントリー者</Table.Th>
               <Table.Th>ステータス</Table.Th>
-              {filteredEntries.some(
-                (entry) => entry.status !== 'WITHDRAWN'
-              ) && <Table.Th>操作</Table.Th>}
+              {entries.some((entry) => entry.status !== 'WITHDRAWN') && (
+                <Table.Th>操作</Table.Th>
+              )}
             </Table.Tr>
           </Table.Thead>
           <Table.Tbody>
-            {filteredEntries.length > 0 ? (
-              filteredEntries.map((entry) => (
+            {entries.length > 0 ? (
+              entries.map((entry) => (
                 <Table.Tr key={entry.id}>
                   <Table.Td>{entry.user.name}</Table.Td>
                   <Table.Td>{STATUS_LABELS[entry.status]}</Table.Td>
-                  {filteredEntries.some((e) => e.status !== 'WITHDRAWN') && (
+                  {entries.some((e) => e.status !== 'WITHDRAWN') && (
                     <Table.Td>
                       {entry.status !== 'WITHDRAWN' && (
                         <>
@@ -366,9 +366,7 @@ export default function AdminProjectDetail() {
               <Table.Tr>
                 <Table.Td
                   colSpan={
-                    filteredEntries.some((e) => e.status !== 'WITHDRAWN')
-                      ? 3
-                      : 2
+                    entries.some((e) => e.status !== 'WITHDRAWN') ? 3 : 2
                   }
                   style={{ textAlign: 'center', padding: '20px' }}
                 >

@@ -27,11 +27,12 @@ export const entryRouter = router({
   findMany: userProcedure
     .input(
       z.object({
-        projectId: z.string()
+        projectId: z.string(),
+        status: EntryStatusEnum.optional()
       })
     )
     .query(async ({ input }) => {
-      return entryRepository.findMany(undefined, undefined, input.projectId)
+      return entryRepository.findMany(input.status, undefined, input.projectId)
     }),
 
   find: userProcedure

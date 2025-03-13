@@ -71,7 +71,8 @@ export function UserProfile() {
           }}
         >
           <Text fw={500} style={{ color: 'white' }}>
-            {user.name || 'ゲスト'} さん
+            {user.name || 'ゲスト'}
+            {user.name?.toLowerCase() !== 'admin' && ' さん'}
           </Text>
         </Menu.Label>
 

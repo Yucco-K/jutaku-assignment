@@ -202,6 +202,7 @@ export default function NewProject() {
                 }
                 type="date"
                 required
+                min={new Date().toISOString().split('T')[0]}
                 {...register('deadline')}
                 error={errors.deadline?.message}
                 size="md"
@@ -243,6 +244,18 @@ export default function NewProject() {
         opened={modalOpened}
         onClose={() => setModalOpened(false)}
         centered
+        transitionProps={{ duration: 0 }}
+        styles={{
+          overlay: {
+            zIndex: 1001
+          },
+          inner: {
+            zIndex: 1002
+          },
+          content: {
+            zIndex: 1002
+          }
+        }}
       >
         <Title order={5} style={{ textAlign: 'center' }}>
           案件が作成されました！

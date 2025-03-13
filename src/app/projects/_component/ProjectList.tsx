@@ -1,6 +1,6 @@
 'use client'
 import React from 'react'
-import { Table, Button, Title } from '@mantine/core'
+import { Table, Button, Title, Loader, Text } from '@mantine/core'
 import { useRouter } from 'next/navigation'
 import type { RouteLiteral } from 'nextjs-routes'
 import { clientApi } from '~/lib/trpc/client-api'
@@ -137,9 +137,23 @@ export const ProjectList = () => {
               <Table.Tr>
                 <Table.Td
                   colSpan={5}
-                  style={{ textAlign: 'center', padding: '20px' }}
+                  style={{
+                    height: 'calc(100vh - 250px)',
+                    border: 'none'
+                  }}
                 >
-                  読み込み中...
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      flexDirection: 'column',
+                      height: '100%'
+                    }}
+                  >
+                    <Loader size="xl" />
+                    <Text mt="md">データを読み込んでいます...</Text>
+                  </div>
                 </Table.Td>
               </Table.Tr>
             ) : projects.length > 0 ? (

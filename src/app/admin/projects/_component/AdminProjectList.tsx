@@ -79,9 +79,16 @@ export const AdminProjectList = () => {
   if (isLoading) {
     return (
       <div
-        style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: 'calc(100vh - 60px)',
+          width: '100%'
+        }}
       >
         <Loader size="xl" />
+        <Text mt="md">データを読み込んでいます...</Text>
       </div>
     )
   }
@@ -326,7 +333,17 @@ export const AdminProjectList = () => {
         opened={opened}
         onClose={() => setOpened(false)}
         centered
-        className="modal-content"
+        styles={{
+          overlay: {
+            zIndex: 1001
+          },
+          inner: {
+            zIndex: 1002
+          },
+          content: {
+            zIndex: 1002
+          }
+        }}
       >
         <Text
           style={{ textAlign: 'center', fontSize: '1.2rem', marginTop: '40px' }}

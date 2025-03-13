@@ -166,7 +166,13 @@ export default function AdminProjectDetail() {
   if (isLoading) {
     return (
       <div
-        style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: 'calc(100vh - 60px)',
+          width: '100%'
+        }}
       >
         <Loader size="xl" />
       </div>
@@ -269,6 +275,24 @@ export default function AdminProjectDetail() {
         title="エントリー 一覧"
         centered
         size="lg"
+        styles={{
+          overlay: {
+            zIndex: 1001
+          },
+          inner: {
+            zIndex: 1002
+          },
+          content: {
+            zIndex: 1002
+          },
+          header: {
+            justifyContent: 'center'
+          },
+          title: {
+            width: '100%',
+            textAlign: 'center'
+          }
+        }}
       >
         {errorMessage && (
           <Text style={{ color: 'red', textAlign: 'center' }} mb="md">
@@ -282,7 +306,6 @@ export default function AdminProjectDetail() {
               setSelectedStatus((value || 'ALL') as EntryStatus | 'ALL')
             }
             data={STATUS_OPTIONS}
-            label="ステータスでフィルター"
             leftSection={<FaFilter />}
             style={{ width: '200px' }}
           />
@@ -342,7 +365,7 @@ export default function AdminProjectDetail() {
                       ? 3
                       : 2
                   }
-                  style={{ textAlign: 'center' }}
+                  style={{ textAlign: 'center', padding: '20px' }}
                 >
                   エントリーはありません
                 </Table.Td>
@@ -350,6 +373,7 @@ export default function AdminProjectDetail() {
             )}
           </Table.Tbody>
         </Table>
+        <div style={{ marginBottom: '40px' }} />
       </Modal>
 
       <Modal
@@ -361,6 +385,17 @@ export default function AdminProjectDetail() {
         }}
         title="ステータス変更の確認"
         centered
+        styles={{
+          overlay: {
+            zIndex: 1001
+          },
+          inner: {
+            zIndex: 1002
+          },
+          content: {
+            zIndex: 1002
+          }
+        }}
       >
         <Text
           style={{ textAlign: 'center', fontSize: '1.2rem', marginTop: '40px' }}
@@ -398,13 +433,25 @@ export default function AdminProjectDetail() {
         opened={deleteModalOpened}
         onClose={() => setDeleteModalOpened(false)}
         centered
+        styles={{
+          overlay: {
+            zIndex: 1001
+          },
+          inner: {
+            zIndex: 1002
+          },
+          content: {
+            zIndex: 1002
+          }
+        }}
       >
         <Text
           style={{ textAlign: 'center', fontSize: '1.2rem', marginTop: '40px' }}
+          mb="xl"
         >
           この案件を削除しますか？
         </Text>
-        <Group justify="center" gap="sm" mt="xl">
+        <Group justify="center" gap="sm" mt={40}>
           <Button
             color="red"
             onClick={handleDelete}

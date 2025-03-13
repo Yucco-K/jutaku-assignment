@@ -105,9 +105,19 @@ export default function EntryList() {
 
   if (isLoading) {
     return (
-      <div style={{ textAlign: 'center', marginTop: '50px' }}>
-        <Loader size="xl" color="blue" />
-        <Text mt="md">データを読み込んでいます...</Text>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: 'calc(100vh - 60px)',
+          width: '100%',
+          flexDirection: 'column',
+          gap: '24px'
+        }}
+      >
+        <Loader size="xl" />
+        <Text size="md">データを読み込んでいます...</Text>
       </div>
     )
   }

@@ -1,29 +1,72 @@
 'use client'
+
 import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Table,
-  Button,
   Title,
   UnstyledButton,
   Group,
   Text,
-  Loader
+  Loader,
+  Badge,
+  Select
 } from '@mantine/core'
-import { IconArrowUp, IconArrowDown, IconSelector } from '@tabler/icons-react'
-import useEntryStore from '@/store/entryStore'
+import { FaSort, FaSortUp, FaSortDown, FaFilter } from 'react-icons/fa'
+import { clientApi } from '~/lib/trpc/client-api'
+import BackButton from '../_components/BackButton'
+
+const STATUS_OPTIONS = [
+  { value: 'ALL', label: '全て' },
+  { value: 'PENDING', label: '保留中' },
+  { value: 'APPROVED', label: '承認済み' },
+  { value: 'REJECTED', label: '却下' },
+  { value: 'WITHDRAWN', label: '取り下げ' }
+]
+
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString)
+  return date.toLocaleDateString()
+}
+
+const getStatusDisplay = (status: string) => {
+  switch (status) {
+    case 'PENDING':
+      return <Badge color="yellow">保留中</Badge>
+    case 'APPROVED':
+      return <Badge color="green">承認済み</Badge>
+    case 'REJECTED':
+      return <Badge color="red">却下</Badge>
+    case 'WITHDRAWN':
+      return <Badge color="red">取り下げ</Badge>
+    default:
+      return <Badge>不明</Badge>
+  }
+}
+
+// エントリーの型定義
+type EntryStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'WITHDRAWN'
+type EntryType = {
+  project?: { title: string; price?: number } | null
+  status: EntryStatus
+  project_id: string
+  user_id: string
+  entry_date: string
+}
 
 export default function EntryList() {
   const router = useRouter()
-  const { entries, loadEntries } = useEntryStore()
   const [sortBy, setSortBy] = useState<'date' | 'price' | null>(null)
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
-  const [sortedEntries, setSortedEntries] = useState(entries)
+  const [selectedStatus, setSelectedStatus] = useState<EntryStatus | 'ALL'>(
+    'ALL'
+  )
 
-  // 初回レンダリング時にエントリーデータを読み込む
-  useEffect(() => {
-    loadEntries()
-  }, [])
+  // tRPCを使用してエントリー一覧を取得（ログインユーザーのみ）
+  const { data: entries = [], isLoading } = clientApi.entry.list.useQuery({
+    status: selectedStatus === 'ALL' ? undefined : selectedStatus
+  }) as { data: EntryType[]; isLoading: boolean }
+  const [sortedEntries, setSortedEntries] = useState<EntryType[]>([])
 
   // エントリーが変更されたらソート済みリストを更新
   useEffect(() => {
@@ -40,15 +83,33 @@ export default function EntryList() {
     const sortedList = [...entries].sort((a, b) => {
       if (field === 'date') {
         return isAsc
-          ? a.date.localeCompare(b.date)
-          : b.date.localeCompare(a.date)
+          ? new Date(a.entry_date).getTime() - new Date(b.entry_date).getTime()
+          : new Date(b.entry_date).getTime() - new Date(a.entry_date).getTime()
       }
       return isAsc
-        ? Number(a.price) - Number(b.price)
-        : Number(b.price) - Number(a.price)
+        ? (a.project?.price || 0) - (b.project?.price || 0)
+        : (b.project?.price || 0) - (a.project?.price || 0)
     })
 
     setSortedEntries(sortedList)
+  }
+
+  const getSortIcon = (field: 'date' | 'price') => {
+    if (sortBy !== field) return <FaSort size={14} />
+    return sortDirection === 'asc' ? (
+      <FaSortUp size={14} />
+    ) : (
+      <FaSortDown size={14} />
+    )
+  }
+
+  if (isLoading) {
+    return (
+      <div style={{ textAlign: 'center', marginTop: '50px' }}>
+        <Loader size="xl" color="blue" />
+        <Text mt="md">データを読み込んでいます...</Text>
+      </div>
+    )
   }
 
   return (
@@ -64,36 +125,35 @@ export default function EntryList() {
       >
         エントリー済み一覧
       </Title>
+
+      <BackButton />
+
       <div
         style={{
-          display: 'flex',
-          justifyContent: 'flex-end',
-          marginBottom: '20px',
-          padding: '0 20px',
-          maxWidth: '1200px',
-          margin: '0 auto 20px'
+          maxWidth: '1000px',
+          margin: '20px auto',
+          padding: '0 20px'
         }}
       >
-        <Button
-          color="blue"
-          size="sm"
-          className="nav-link"
-          style={{
-            width: 'auto',
-            minWidth: '200px',
-            marginRight: '20px'
-          }}
-          onClick={() => router.back()}
-        >
-          戻る
-        </Button>
+        <Group justify="flex-end" mb="md">
+          <Select
+            value={selectedStatus}
+            onChange={(value) =>
+              setSelectedStatus((value || 'ALL') as EntryStatus | 'ALL')
+            }
+            data={STATUS_OPTIONS}
+            label="ステータスでフィルター"
+            leftSection={<FaFilter />}
+            style={{ width: '200px' }}
+          />
+        </Group>
       </div>
 
       <div className="table-container">
         <Table
           style={{
             width: '100%',
-            maxWidth: '1200px',
+            maxWidth: '1000px',
             margin: 'auto',
             borderCollapse: 'collapse',
             border: '1px solid #e0e0e0'
@@ -112,15 +172,7 @@ export default function EntryList() {
                 <UnstyledButton onClick={() => sortData('date')}>
                   <Group justify="center" gap="xs">
                     <Text>エントリー日</Text>
-                    {sortBy === 'date' ? (
-                      sortDirection === 'asc' ? (
-                        <IconArrowUp size={16} />
-                      ) : (
-                        <IconArrowDown size={16} />
-                      )
-                    ) : (
-                      <IconSelector size={16} />
-                    )}
+                    {getSortIcon('date')}
                   </Group>
                 </UnstyledButton>
               </Table.Th>
@@ -145,54 +197,52 @@ export default function EntryList() {
                 <UnstyledButton onClick={() => sortData('price')}>
                   <Group justify="center" gap="xs">
                     <Text>単価</Text>
-                    {sortBy === 'price' ? (
-                      sortDirection === 'asc' ? (
-                        <IconArrowUp size={16} />
-                      ) : (
-                        <IconArrowDown size={16} />
-                      )
-                    ) : (
-                      <IconSelector size={16} />
-                    )}
+                    {getSortIcon('price')}
                   </Group>
                 </UnstyledButton>
+              </Table.Th>
+              <Table.Th
+                style={{
+                  textAlign: 'center',
+                  width: '120px',
+                  border: '1px solid #e0e0e0',
+                  padding: '12px'
+                }}
+              >
+                ステータス
               </Table.Th>
             </Table.Tr>
           </Table.Thead>
           <Table.Tbody>
-            {sortedEntries.map((entry) => (
-              <Table.Tr key={entry.id} style={{ textAlign: 'center' }}>
+            {sortedEntries.length > 0 ? (
+              sortedEntries.map((entry) => (
+                <Table.Tr key={`${entry.project_id}_${entry.user_id}`}>
+                  <Table.Td style={{ textAlign: 'center' }}>
+                    {formatDate(entry.entry_date)}
+                  </Table.Td>
+                  <Table.Td style={{ textAlign: 'center' }}>
+                    {entry.project?.title || '不明'}
+                  </Table.Td>
+                  <Table.Td style={{ textAlign: 'center' }}>
+                    {entry.project?.price
+                      ? `${entry.project.price.toLocaleString()}円`
+                      : '未設定'}
+                  </Table.Td>
+                  <Table.Td style={{ textAlign: 'center' }}>
+                    {getStatusDisplay(entry.status)}
+                  </Table.Td>
+                </Table.Tr>
+              ))
+            ) : (
+              <Table.Tr>
                 <Table.Td
-                  style={{
-                    width: '160px',
-                    border: '1px solid #e0e0e0',
-                    padding: '12px'
-                  }}
+                  colSpan={4}
+                  style={{ textAlign: 'center', padding: '20px' }}
                 >
-                  {new Date(entry.date).toLocaleDateString()}
-                </Table.Td>
-                <Table.Td
-                  style={{
-                    width: '400px',
-                    whiteSpace: 'normal',
-                    wordBreak: 'break-word',
-                    border: '1px solid #e0e0e0',
-                    padding: '12px'
-                  }}
-                >
-                  {entry.name}
-                </Table.Td>
-                <Table.Td
-                  style={{
-                    width: '120px',
-                    border: '1px solid #e0e0e0',
-                    padding: '12px'
-                  }}
-                >
-                  {entry.price}円
+                  データがありません
                 </Table.Td>
               </Table.Tr>
-            ))}
+            )}
           </Table.Tbody>
         </Table>
       </div>

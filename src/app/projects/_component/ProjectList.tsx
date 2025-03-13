@@ -1,33 +1,33 @@
 'use client'
-import React, { useEffect, useState } from 'react'
+import React from 'react'
 import { Table, Button, Title } from '@mantine/core'
 import { useRouter } from 'next/navigation'
 import type { RouteLiteral } from 'nextjs-routes'
+import { clientApi } from '~/lib/trpc/client-api'
 
 export const ProjectList = () => {
   const router = useRouter()
-  const [projects, setProjects] = useState<
-    {
-      id: number
-      date: string
-      name: string
-      description: string
-      skills: string
-    }[]
-  >([])
-
-  // 初回レンダリング時に localStorage からデータを読み込む
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const storedProjects = localStorage.getItem('projects')
-      if (storedProjects) {
-        setProjects(JSON.parse(storedProjects))
-      }
-    }
-  }, [])
+  const { data: projects = [], isLoading } =
+    clientApi.project.list.useQuery<
+      {
+        id: string
+        created_at: string
+        title: string
+        description: string | null
+        price: number | null
+        deadline: string | null
+        creator_id: string
+        skills: Array<{
+          skill: {
+            id: string
+            name: string
+          }
+        }>
+      }[]
+    >()
 
   // 案件詳細ページへの遷移処理
-  const handleProjectDetail = (projectId: number) => {
+  const handleProjectDetail = (projectId: string) => {
     router.push(`/projects/${projectId}` as RouteLiteral)
   }
 
@@ -133,7 +133,16 @@ export const ProjectList = () => {
             </Table.Tr>
           </Table.Thead>
           <Table.Tbody>
-            {projects.length > 0 ? (
+            {isLoading ? (
+              <Table.Tr>
+                <Table.Td
+                  colSpan={5}
+                  style={{ textAlign: 'center', padding: '20px' }}
+                >
+                  読み込み中...
+                </Table.Td>
+              </Table.Tr>
+            ) : projects.length > 0 ? (
               projects.map((project) => (
                 <Table.Tr key={project.id} style={{ textAlign: 'center' }}>
                   <Table.Td
@@ -143,7 +152,7 @@ export const ProjectList = () => {
                       padding: '12px'
                     }}
                   >
-                    {project.date}
+                    {new Date(project.created_at).toLocaleDateString()}
                   </Table.Td>
                   <Table.Td
                     style={{
@@ -154,7 +163,7 @@ export const ProjectList = () => {
                       padding: '12px'
                     }}
                   >
-                    {project.name}
+                    {project.title}
                   </Table.Td>
                   <Table.Td
                     style={{
@@ -176,7 +185,9 @@ export const ProjectList = () => {
                       padding: '12px'
                     }}
                   >
-                    {project.skills}
+                    {project.skills
+                      ?.map((skill) => skill.skill.name)
+                      .join(', ')}
                   </Table.Td>
                   <Table.Td
                     style={{

@@ -4,24 +4,38 @@ import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
 export const entryRepository = {
-  async create(
+  async createOrUpdate(
     data: Prisma.EntryCreateInput & { status: EntryStatus },
     projectId: string,
     userId: string,
     entryDate: string
   ): Promise<Entry> {
-    return prisma.entry.create({
-      data: {
-        ...data,
-        status: data.status,
-        entry_date: new Date(entryDate),
-        project: {
-          connect: { id: projectId }
-        },
-        user: {
-          connect: { id: userId }
+    // 重複チェック
+    const existingEntry = await prisma.entry.findUnique({
+      where: { project_id_user_id: { project_id: projectId, user_id: userId } }
+    })
+
+    // 重複がない場合は新規作成
+    if (!existingEntry) {
+      return prisma.entry.create({
+        data: {
+          ...data,
+          status: data.status,
+          entry_date: new Date(entryDate),
+          project: {
+            connect: { id: projectId }
+          },
+          user: {
+            connect: { id: userId }
+          }
         }
-      }
+      })
+    }
+
+    // 重複がある場合は更新
+    return prisma.entry.update({
+      where: { project_id_user_id: { project_id: projectId, user_id: userId } },
+      data: { status: data.status } // 必要なフィールドのみ更新
     })
   },
 

@@ -39,7 +39,8 @@ export const ProjectList = () => {
         style={{
           textAlign: 'center',
           color: '#5a5a5a',
-          marginBottom: '44px'
+          marginBottom: '48px',
+          letterSpacing: '0.5px'
         }}
       >
         案件一覧
@@ -48,10 +49,10 @@ export const ProjectList = () => {
         style={{
           display: 'flex',
           justifyContent: 'flex-end',
-          marginBottom: '20px',
+          marginBottom: '32px',
           padding: '0 20px',
           maxWidth: '1200px',
-          margin: '0 auto 20px'
+          margin: '0 auto 32px'
         }}
       >
         <Button
@@ -61,14 +62,15 @@ export const ProjectList = () => {
           style={{
             width: 'auto',
             minWidth: '200px',
-            marginRight: '20px'
+            marginRight: '20px',
+            letterSpacing: '0.5px'
           }}
           onClick={() => router.push('/entry-list')}
         >
           エントリー 一覧
         </Button>
       </div>
-      <div className="table-container">
+      <div className="table-container" style={{ marginBottom: '48px' }}>
         <Table
           style={{
             width: '100%',
@@ -85,7 +87,8 @@ export const ProjectList = () => {
                   textAlign: 'center',
                   width: '150px',
                   border: '1px solid #e0e0e0',
-                  padding: '12px'
+                  padding: '16px',
+                  letterSpacing: '0.5px'
                 }}
               >
                 案件作成日
@@ -95,7 +98,8 @@ export const ProjectList = () => {
                   textAlign: 'center',
                   width: '250px',
                   border: '1px solid #e0e0e0',
-                  padding: '12px'
+                  padding: '16px',
+                  letterSpacing: '0.5px'
                 }}
               >
                 案件名
@@ -105,7 +109,8 @@ export const ProjectList = () => {
                   textAlign: 'center',
                   width: '300px',
                   border: '1px solid #e0e0e0',
-                  padding: '12px'
+                  padding: '16px',
+                  letterSpacing: '0.5px'
                 }}
               >
                 概要
@@ -115,7 +120,8 @@ export const ProjectList = () => {
                   textAlign: 'center',
                   width: '250px',
                   border: '1px solid #e0e0e0',
-                  padding: '12px'
+                  padding: '16px',
+                  letterSpacing: '0.5px'
                 }}
               >
                 必要なスキル
@@ -125,7 +131,8 @@ export const ProjectList = () => {
                   textAlign: 'center',
                   width: '120px',
                   border: '1px solid #e0e0e0',
-                  padding: '12px'
+                  padding: '16px',
+                  letterSpacing: '0.5px'
                 }}
               >
                 操作
@@ -148,11 +155,11 @@ export const ProjectList = () => {
                       justifyContent: 'center',
                       alignItems: 'center',
                       flexDirection: 'column',
-                      height: '100%'
+                      height: '100%',
+                      gap: '16px'
                     }}
                   >
                     <Loader size="xl" />
-                    <Text mt="md">データを読み込んでいます...</Text>
                   </div>
                 </Table.Td>
               </Table.Tr>
@@ -163,7 +170,8 @@ export const ProjectList = () => {
                     style={{
                       width: '150px',
                       border: '1px solid #e0e0e0',
-                      padding: '12px'
+                      padding: '16px',
+                      lineHeight: '1.6'
                     }}
                   >
                     {new Date(project.created_at).toLocaleDateString()}
@@ -174,7 +182,8 @@ export const ProjectList = () => {
                       whiteSpace: 'normal',
                       wordBreak: 'break-word',
                       border: '1px solid #e0e0e0',
-                      padding: '12px'
+                      padding: '16px',
+                      lineHeight: '1.6'
                     }}
                   >
                     {project.title}
@@ -185,7 +194,8 @@ export const ProjectList = () => {
                       whiteSpace: 'normal',
                       wordBreak: 'break-word',
                       border: '1px solid #e0e0e0',
-                      padding: '12px'
+                      padding: '16px',
+                      lineHeight: '1.6'
                     }}
                   >
                     {project.description}
@@ -196,7 +206,8 @@ export const ProjectList = () => {
                       whiteSpace: 'normal',
                       wordBreak: 'break-word',
                       border: '1px solid #e0e0e0',
-                      padding: '12px'
+                      padding: '16px',
+                      lineHeight: '1.6'
                     }}
                   >
                     {project.skills
@@ -207,14 +218,19 @@ export const ProjectList = () => {
                     style={{
                       width: '120px',
                       border: '1px solid #e0e0e0',
-                      padding: '12px'
+                      padding: '16px'
                     }}
                   >
                     <Button
                       color="blue"
                       size="xs"
                       className="button-group"
-                      style={{ flex: 1, minWidth: '30px', fontSize: '0.8rem' }}
+                      style={{
+                        flex: 1,
+                        minWidth: '30px',
+                        fontSize: '0.8rem',
+                        letterSpacing: '0.5px'
+                      }}
                       onClick={() => handleProjectDetail(project.id)}
                     >
                       詳細
@@ -226,7 +242,11 @@ export const ProjectList = () => {
               <Table.Tr>
                 <Table.Td
                   colSpan={5}
-                  style={{ textAlign: 'center', padding: '20px' }}
+                  style={{
+                    textAlign: 'center',
+                    padding: '32px',
+                    fontSize: '1.1rem'
+                  }}
                 >
                   データがありません
                 </Table.Td>

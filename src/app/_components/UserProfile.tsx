@@ -1,6 +1,6 @@
 'use client'
 
-import { Menu, Avatar, Group, Text, ActionIcon } from '@mantine/core'
+import { Menu, Group, Text, ActionIcon } from '@mantine/core'
 import { FaUserCircle, FaSignOutAlt } from 'react-icons/fa'
 import { useRouter } from 'next/navigation'
 import { notifications } from '@mantine/notifications'
@@ -25,7 +25,7 @@ export function UserProfile() {
 
       router.push('/')
     } catch (error) {
-      console.error('❌ ログアウトエラー:', error)
+      console.error('ログアウトエラー:', error)
       notifications.show({
         title: 'エラー',
         message:

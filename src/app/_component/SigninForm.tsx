@@ -93,14 +93,12 @@ export function SigninForm() {
         ログイン
       </Title>
       <Card
-        withBorder
         shadow="sm"
         radius="md"
         padding="xl"
         className="card"
         style={{ width: '100%', maxWidth: '500px', margin: '0 auto' }}
       >
-        <Divider my="lg" />
         <form onSubmit={handleSubmit(onSignInSubmit)}>
           <Stack>
             <TextInput

@@ -12,7 +12,7 @@ import {
   Textarea,
   Stack,
   MultiSelect,
-  Modal,
+  Popover,
   Text,
   Group,
   Loader
@@ -27,18 +27,7 @@ const schema = z.object({
   skillNames: z
     .array(z.string())
     .min(1, '必要なスキルは1つ以上選択してください'),
-  deadline: z
-    .string()
-    .min(1, '募集締切日は必須です')
-    .refine(
-      (date) => {
-        const today = new Date()
-        today.setHours(0, 0, 0, 0)
-        const inputDate = new Date(date)
-        return inputDate >= today
-      },
-      { message: '募集締切日は今日以降の日付を選択してください' }
-    ),
+  deadline: z.string().min(1, '募集締切日は必須です'),
   price: z.string().min(1, '単価は必須です')
 })
 
@@ -133,7 +122,6 @@ export default function EditProject() {
         }}
       >
         <Loader size="xl" />
-        <Text mt="md">データを読み込んでいます...</Text>
       </div>
     )
   }
@@ -164,11 +152,9 @@ export default function EditProject() {
       <BackButton />
 
       <Card
-        shadow="sm"
-        padding="lg"
-        withBorder
-        className="form-container"
-        style={{ maxWidth: '700px', margin: 'auto' }}
+        shadow="md"
+        padding="xl"
+        style={{ maxWidth: '700px', margin: 'auto', marginBottom: '48px' }}
       >
         <form onSubmit={handleSubmit(onSubmit)}>
           <Stack gap="xl">
@@ -218,6 +204,11 @@ export default function EditProject() {
               error={errors.skillNames?.message}
               searchable
               size="md"
+              styles={{
+                dropdown: {
+                  zIndex: 9999
+                }
+              }}
             />
 
             <TextInput
@@ -230,7 +221,6 @@ export default function EditProject() {
                 </span>
               }
               type="date"
-              min={new Date().toISOString().split('T')[0]}
               {...register('deadline')}
               error={errors.deadline?.message}
               size="md"
@@ -267,33 +257,46 @@ export default function EditProject() {
         </form>
       </Card>
 
-      <Modal
+      <Popover
         opened={modalOpened}
         onClose={() => setModalOpened(false)}
-        centered
+        position="top"
+        withArrow
+        shadow="md"
         styles={{
-          overlay: {
-            zIndex: 1001
-          },
-          inner: {
-            zIndex: 1002
-          },
-          content: {
-            zIndex: 1002
+          dropdown: {
+            padding: '20px',
+            borderRadius: '8px',
+            backgroundColor: '#fff',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+            border: '1px solid #e0e0e0'
           }
         }}
       >
-        <Text
-          style={{ textAlign: 'center', fontSize: '1.2rem', marginTop: '40px' }}
-        >
-          案件を更新しました！
-        </Text>
-        <Group justify="center" mt="xl" className="modal-footer">
-          <Button color="blue" onClick={() => router.push('/admin/projects')}>
-            OK
-          </Button>
-        </Group>
-      </Modal>
+        <Popover.Target>
+          <div style={{ display: 'none' }} />
+        </Popover.Target>
+        <Popover.Dropdown>
+          <Text
+            style={{
+              textAlign: 'center',
+              fontSize: '1.2rem',
+              marginBottom: '16px'
+            }}
+          >
+            案件を更新しました！
+          </Text>
+          <Group justify="center">
+            <Button
+              color="blue"
+              onClick={() => router.push('/admin/projects')}
+              size="sm"
+            >
+              OK
+            </Button>
+          </Group>
+        </Popover.Dropdown>
+      </Popover>
     </>
   )
 }

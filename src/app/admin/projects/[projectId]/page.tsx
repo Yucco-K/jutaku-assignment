@@ -48,6 +48,7 @@ export default function AdminProjectDetail() {
   const [selectedEntry, setSelectedEntry] = useState<{
     id: string
     status: EntryStatus
+    user_id: string
   } | null>(null)
   const [newStatus, setNewStatus] = useState<EntryStatus | null>(null)
   const [errorMessage, setErrorMessage] = useState('')
@@ -82,9 +83,14 @@ export default function AdminProjectDetail() {
       user: { id: string; name: string }
     }[]
   >({
-    projectId: params?.projectId as string,
-    status: selectedStatus === 'ALL' ? undefined : selectedStatus
+    projectId: params?.projectId as string
   })
+
+  // フィルタリングされたエントリーを取得
+  const filteredEntries =
+    selectedStatus === 'ALL'
+      ? entries
+      : entries.filter((entry) => entry.status === selectedStatus)
 
   // プロジェクト削除のミューテーション
   const deleteMutation = clientApi.project.delete.useMutation({
@@ -134,23 +140,21 @@ export default function AdminProjectDetail() {
   const handleStatusChange = (
     entryId: string,
     currentStatus: EntryStatus,
-    newStatusValue: string
+    newStatusValue: string,
+    userId: string
   ) => {
-    setSelectedEntry({ id: entryId, status: currentStatus })
+    setSelectedEntry({ id: entryId, status: currentStatus, user_id: userId })
     setNewStatus(newStatusValue as EntryStatus)
     setConfirmModalOpened(true)
   }
 
   const handleStatusUpdate = async () => {
-    if (!selectedEntry || !newStatus) return
+    if (!selectedEntry || !newStatus || !params?.projectId) return
 
     try {
-      const entry = entries.find((e) => e.id === selectedEntry.id)
-      if (!entry) return
-
       await updateEntryMutation.mutateAsync({
-        project_id: entry.project_id,
-        user_id: entry.user_id,
+        project_id: params.projectId as string,
+        user_id: selectedEntry.user_id,
         status: newStatus
       })
     } catch (error) {
@@ -185,7 +189,7 @@ export default function AdminProjectDetail() {
   if (errorMessage) {
     return (
       <div style={{ textAlign: 'center', padding: '2rem' }}>
-        <Text color="red">{errorMessage}</Text>
+        <Text c="red">{errorMessage}</Text>
         <Button onClick={() => router.push('/admin/signin')} mt="md">
           管理者ログインページへ
         </Button>
@@ -195,278 +199,317 @@ export default function AdminProjectDetail() {
 
   return (
     <>
-      <Title
-        order={2}
-        style={{
-          textAlign: 'center',
-          color: '#5a5a5a',
-          marginTop: '32px',
-          marginBottom: '60px'
-        }}
-      >
-        案件詳細
-      </Title>
-
-      <BackButton />
-
-      <Table style={{ maxWidth: '700px', margin: '60px auto' }}>
-        <Table.Tbody>
-          {[
-            ['案件名', project.title],
-            ['概要', project.description || ''],
-            [
-              '必要スキル',
-              project.skills?.map((s) => s.skill.name).join(', ') || ''
-            ],
-            [
-              '募集締切日',
-              project.deadline
-                ? new Date(project.deadline)
-                    .toLocaleDateString('ja-JP', {
-                      year: 'numeric',
-                      month: '2-digit',
-                      day: '2-digit'
-                    })
-                    .replace(/\u200E/g, '')
-                    .split('/')
-                    .join('/')
-                : ''
-            ],
-            [
-              '単価',
-              project.price
-                ? `${new Intl.NumberFormat('ja-JP').format(project.price)}円`
-                : ''
-            ]
-          ].map(([label, value]) => (
-            <Table.Tr key={label}>
-              <Table.Th
-                style={{
-                  backgroundColor: '#E3F2FD',
-                  textAlign: 'center',
-                  width: '30%',
-                  padding: '20px'
-                }}
-              >
-                {label}
-              </Table.Th>
-              <Table.Td style={{ textAlign: 'center', padding: '20px' }}>
-                {value}
-              </Table.Td>
-            </Table.Tr>
-          ))}
-        </Table.Tbody>
-      </Table>
-
-      <ActionButtons
-        handleEdit={handleEdit}
-        setEntryModalOpened={setEntryModalOpened}
-        setDeleteModalOpened={setDeleteModalOpened}
-      />
-
-      <Modal
-        opened={entryModalOpened}
-        onClose={() => setEntryModalOpened(false)}
-        title="エントリー 一覧"
-        centered
-        size="lg"
-        styles={{
-          overlay: {
-            zIndex: 1001
-          },
-          inner: {
-            zIndex: 1002
-          },
-          content: {
-            zIndex: 1002
-          },
-          header: {
-            justifyContent: 'center'
-          },
-          title: {
-            width: '100%',
-            textAlign: 'center'
-          }
-        }}
-      >
-        {errorMessage && (
-          <Text style={{ color: 'red', textAlign: 'center' }} mb="md">
-            {errorMessage}
-          </Text>
-        )}
-        <Group justify="flex-end" mb="md">
-          <Select
-            value={selectedStatus}
-            onChange={(value) =>
-              setSelectedStatus((value || 'ALL') as EntryStatus | 'ALL')
-            }
-            data={STATUS_OPTIONS}
-            leftSection={<FaFilter />}
-            style={{ width: '200px' }}
-            styles={{
-              dropdown: {
-                zIndex: 1003
-              }
-            }}
-          />
-        </Group>
-        <Table>
-          <Table.Thead>
-            <Table.Tr>
-              <Table.Th>エントリー者</Table.Th>
-              <Table.Th>ステータス</Table.Th>
-              {entries.some((entry) => entry.status !== 'WITHDRAWN') && (
-                <Table.Th>操作</Table.Th>
-              )}
-            </Table.Tr>
-          </Table.Thead>
+      <>
+        <Title
+          order={2}
+          style={{
+            textAlign: 'center',
+            color: '#5a5a5a',
+            marginTop: '32px',
+            marginBottom: '60px'
+          }}
+        >
+          案件詳細
+        </Title>
+        <BackButton />
+        <Table
+          style={{
+            maxWidth: '700px',
+            margin: '60px auto',
+            marginBottom: '48px',
+            boxShadow: 'md'
+          }}
+        >
           <Table.Tbody>
-            {entries.length > 0 ? (
-              entries.map((entry) => (
-                <Table.Tr key={entry.id}>
-                  <Table.Td>{entry.user.name}</Table.Td>
-                  <Table.Td>{STATUS_LABELS[entry.status]}</Table.Td>
-                  {entries.some((e) => e.status !== 'WITHDRAWN') && (
-                    <Table.Td>
-                      {entry.status !== 'WITHDRAWN' && (
-                        <>
-                          {entry.status !== 'APPROVED' &&
-                            entry.status !== 'REJECTED' && (
-                              <Select
-                                value={entry.status}
-                                onChange={(value) =>
-                                  handleStatusChange(
-                                    entry.id,
-                                    entry.status,
-                                    value as string
-                                  )
-                                }
-                                data={SELECTABLE_STATUSES}
-                                placeholder="ステータスを選択"
-                                styles={{
-                                  dropdown: {
-                                    zIndex: 1003
-                                  }
-                                }}
-                              />
-                            )}
-                          {(entry.status === 'APPROVED' ||
-                            entry.status === 'REJECTED') && (
-                            <Text size="sm" c="dimmed">
-                              ステータス変更不可
-                            </Text>
-                          )}
-                        </>
-                      )}
-                    </Table.Td>
-                  )}
-                </Table.Tr>
-              ))
-            ) : (
-              <Table.Tr>
+            {[
+              ['案件名', project.title],
+              ['概要', project.description || ''],
+              [
+                '必要スキル',
+                project.skills?.map((s) => s.skill.name).join(', ') || ''
+              ],
+              [
+                '募集締切日',
+                project.deadline
+                  ? new Date(project.deadline)
+                      .toLocaleDateString('ja-JP', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit'
+                      })
+                      .replace(/\u200E/g, '')
+                      .split('/')
+                      .join('/')
+                  : ''
+              ],
+              [
+                '単価',
+                project.price
+                  ? `${new Intl.NumberFormat('ja-JP').format(project.price)}円`
+                  : ''
+              ]
+            ].map(([label, value], index) => (
+              <Table.Tr key={`${label}-${project.id}-${index}`}>
                 <Table.Td
-                  colSpan={
-                    entries.some((e) => e.status !== 'WITHDRAWN') ? 3 : 2
-                  }
-                  style={{ textAlign: 'center', padding: '20px' }}
+                  style={{
+                    width: '200px',
+                    backgroundColor: '#E3F2FD',
+                    fontWeight: 'bold',
+                    border: '1px solid #e0e0e0',
+                    padding: '12px',
+                    textAlign: 'center'
+                  }}
                 >
-                  エントリーはありません
+                  {label}
+                </Table.Td>
+                <Table.Td
+                  style={{
+                    border: '1px solid #e0e0e0',
+                    padding: '12px',
+                    textAlign: 'center'
+                  }}
+                >
+                  {value}
                 </Table.Td>
               </Table.Tr>
-            )}
+            ))}
           </Table.Tbody>
         </Table>
-        <div style={{ marginBottom: '40px' }} />
-      </Modal>
-
-      <Modal
-        opened={confirmModalOpened}
-        onClose={() => {
-          setConfirmModalOpened(false)
-          setSelectedEntry(null)
-          setNewStatus(null)
-        }}
-        title="ステータス変更の確認"
-        centered
-        styles={{
-          overlay: {
-            zIndex: 1001
-          },
-          inner: {
-            zIndex: 1002
-          },
-          content: {
-            zIndex: 1002
-          }
-        }}
-      >
-        <Text
-          style={{ textAlign: 'center', fontSize: '1.2rem', marginTop: '40px' }}
-          mb="xl"
+        <div style={{ marginBottom: '48px' }}>
+          <ActionButtons
+            handleEdit={handleEdit}
+            setEntryModalOpened={setEntryModalOpened}
+            setDeleteModalOpened={setDeleteModalOpened}
+          />
+        </div>
+        <Modal
+          opened={entryModalOpened}
+          onClose={() => setEntryModalOpened(false)}
+          title="エントリー 一覧"
+          centered
+          size="lg"
         >
-          ステータスを{' '}
-          {selectedEntry && (
-            <strong>{STATUS_LABELS[selectedEntry.status]}</strong>
-          )}{' '}
-          から {newStatus && <strong>{STATUS_LABELS[newStatus]}</strong>}{' '}
-          に変更してよろしいですか？
-        </Text>
-        <Group justify="center" mt="xl">
-          <Button
-            color="blue"
-            onClick={handleStatusUpdate}
-            loading={updateEntryMutation.isLoading}
-          >
-            OK
-          </Button>
-          <Button
-            variant="default"
-            onClick={() => {
-              setConfirmModalOpened(false)
-              setSelectedEntry(null)
-              setNewStatus(null)
+          {errorMessage && (
+            <Text style={{ color: 'red', textAlign: 'center' }} mb="md">
+              {errorMessage}
+            </Text>
+          )}
+          <Group justify="flex-end" mb="md">
+            <Select
+              value={selectedStatus}
+              onChange={(value) =>
+                setSelectedStatus((value || 'ALL') as EntryStatus | 'ALL')
+              }
+              data={STATUS_OPTIONS}
+              leftSection={<FaFilter />}
+              style={{ width: '200px', zIndex: 1100 }}
+            />
+          </Group>
+          <Table>
+            <Table.Thead>
+              <Table.Tr>
+                <Table.Th style={{ minWidth: '120px', textAlign: 'center' }}>
+                  エントリー者
+                </Table.Th>
+                <Table.Th style={{ minWidth: '100px', textAlign: 'center' }}>
+                  ステータス
+                </Table.Th>
+                {filteredEntries.some(
+                  (entry) => entry.status !== 'WITHDRAWN'
+                ) && (
+                  <Table.Th style={{ minWidth: '150px', textAlign: 'center' }}>
+                    操作
+                  </Table.Th>
+                )}
+              </Table.Tr>
+            </Table.Thead>
+            <Table.Tbody>
+              {filteredEntries.length > 0 ? (
+                filteredEntries.map((entry) => (
+                  <Table.Tr key={entry.id}>
+                    <Table.Td
+                      style={{ minWidth: '120px', textAlign: 'center' }}
+                    >
+                      {entry.user.name}
+                    </Table.Td>
+                    <Table.Td
+                      style={{ minWidth: '100px', textAlign: 'center' }}
+                    >
+                      {STATUS_LABELS[entry.status]}
+                    </Table.Td>
+                    {filteredEntries.some((e) => e.status !== 'WITHDRAWN') && (
+                      <Table.Td
+                        style={{ minWidth: '150px', textAlign: 'center' }}
+                      >
+                        {entry.status !== 'WITHDRAWN' && (
+                          <>
+                            {entry.status !== 'APPROVED' &&
+                              entry.status !== 'REJECTED' && (
+                                <Select
+                                  value={entry.status}
+                                  onChange={(value) =>
+                                    handleStatusChange(
+                                      entry.id,
+                                      entry.status,
+                                      value as string,
+                                      entry.user_id
+                                    )
+                                  }
+                                  data={SELECTABLE_STATUSES}
+                                  placeholder="ステータスを選択"
+                                  style={{
+                                    width: '100%',
+                                    maxWidth: '200px',
+                                    zIndex: 1100
+                                  }}
+                                />
+                              )}
+                            {(entry.status === 'APPROVED' ||
+                              entry.status === 'REJECTED') && (
+                              <Text size="sm" c="dimmed">
+                                ステータス変更不可
+                              </Text>
+                            )}
+                          </>
+                        )}
+                      </Table.Td>
+                    )}
+                  </Table.Tr>
+                ))
+              ) : (
+                <Table.Tr>
+                  <Table.Td
+                    colSpan={
+                      filteredEntries.some((e) => e.status !== 'WITHDRAWN')
+                        ? 3
+                        : 2
+                    }
+                    style={{
+                      textAlign: 'center',
+                      padding: '20px',
+                      marginBottom: '48px'
+                    }}
+                  >
+                    エントリーはありません
+                  </Table.Td>
+                </Table.Tr>
+              )}
+            </Table.Tbody>
+          </Table>
+        </Modal>
+        <Modal
+          opened={confirmModalOpened}
+          onClose={() => {
+            setConfirmModalOpened(false)
+            setSelectedEntry(null)
+            setNewStatus(null)
+          }}
+          title="ステータス変更の確認"
+          centered
+          styles={{
+            overlay: {
+              zIndex: 1001
+            },
+            inner: {
+              zIndex: 1002
+            },
+            content: {
+              zIndex: 1003
+            },
+            header: {
+              justifyContent: 'center'
+            },
+            title: {
+              width: '100%',
+              textAlign: 'center'
+            }
+          }}
+        >
+          <Text
+            style={{
+              textAlign: 'center',
+              fontSize: '1.2rem',
+              marginTop: '40px'
             }}
+            mb="xl"
           >
-            キャンセル
-          </Button>
-        </Group>
-      </Modal>
-
-      <Modal
-        opened={deleteModalOpened}
-        onClose={() => setDeleteModalOpened(false)}
-        centered
-        styles={{
-          overlay: {
-            zIndex: 1001
-          },
-          inner: {
-            zIndex: 1002
-          },
-          content: {
-            zIndex: 1002
-          }
-        }}
-      >
-        <Text
-          style={{ textAlign: 'center', fontSize: '1.2rem', marginTop: '40px' }}
-          mb="xl"
+            ステータスを{' '}
+            {selectedEntry && (
+              <strong>{STATUS_LABELS[selectedEntry.status]}</strong>
+            )}{' '}
+            から {newStatus && <strong>{STATUS_LABELS[newStatus]}</strong>}{' '}
+            に変更してよろしいですか？
+          </Text>
+          <Group justify="center" mt="xl">
+            <Button
+              color="blue"
+              onClick={handleStatusUpdate}
+              loading={updateEntryMutation.isLoading}
+            >
+              OK
+            </Button>
+            <Button
+              variant="default"
+              onClick={() => {
+                setConfirmModalOpened(false)
+                setSelectedEntry(null)
+                setNewStatus(null)
+              }}
+            >
+              キャンセル
+            </Button>
+          </Group>
+        </Modal>
+        <Modal
+          opened={deleteModalOpened}
+          onClose={() => setDeleteModalOpened(false)}
+          centered
+          styles={{
+            overlay: {
+              zIndex: 1001
+            },
+            inner: {
+              zIndex: 1002
+            },
+            content: {
+              zIndex: 1002
+            },
+            header: {
+              justifyContent: 'center'
+            },
+            title: {
+              width: '100%',
+              textAlign: 'center'
+            }
+          }}
         >
-          この案件を削除しますか？
-        </Text>
-        <Group justify="center" gap="sm" mt={40}>
-          <Button
-            color="red"
-            onClick={handleDelete}
-            loading={deleteMutation.isLoading}
+          <Text
+            style={{
+              textAlign: 'center',
+              fontSize: '1.2rem',
+              marginTop: '40px'
+            }}
+            mb="xl"
           >
-            はい
-          </Button>
-          <Button variant="default" onClick={() => setDeleteModalOpened(false)}>
-            いいえ
-          </Button>
-        </Group>
-      </Modal>
+            この案件を削除しますか？
+          </Text>
+          <Group justify="center" gap="sm" mt={40}>
+            <Button
+              color="red"
+              onClick={handleDelete}
+              loading={deleteMutation.isLoading}
+            >
+              はい
+            </Button>
+            <Button
+              variant="default"
+              onClick={() => setDeleteModalOpened(false)}
+            >
+              いいえ
+            </Button>
+          </Group>
+        </Modal>
+      </>
     </>
   )
 }

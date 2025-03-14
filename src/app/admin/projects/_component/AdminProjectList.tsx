@@ -3,7 +3,7 @@ import React, { useState } from 'react'
 import { Table, Button, Modal, Title, Text, Group, Loader } from '@mantine/core'
 import { useRouter } from 'next/navigation'
 import type { RouteLiteral } from 'nextjs-routes'
-import { clientApi } from '~/lib/trpc/client-api'
+import { clientApi } from '~/lib/trpc/client-api' // Ensure clientApi is correctly typed and includes the project property
 import { useMediaQuery } from '@mantine/hooks'
 
 export const AdminProjectList = () => {
@@ -87,7 +87,6 @@ export const AdminProjectList = () => {
         }}
       >
         <Loader size="xl" />
-        <Text mt="md">データを読み込んでいます...</Text>
       </div>
     )
   }
@@ -130,7 +129,7 @@ export const AdminProjectList = () => {
           新規案件作成
         </Button>
       </div>
-      <div className="table-container">
+      <div className="table-container" style={{ marginBottom: '48px' }}>
         <Table
           style={{
             width: '100%',
@@ -331,7 +330,6 @@ export const AdminProjectList = () => {
       <Modal
         opened={opened}
         onClose={() => setOpened(false)}
-        centered
         styles={{
           overlay: {
             zIndex: 1001
@@ -341,8 +339,17 @@ export const AdminProjectList = () => {
           },
           content: {
             zIndex: 1002
+          },
+          header: {
+            justifyContent: 'center'
+          },
+          title: {
+            width: '100%',
+            textAlign: 'center'
           }
         }}
+        centered
+        className="modal-content"
       >
         <Text
           style={{ textAlign: 'center', fontSize: '1.2rem', marginTop: '40px' }}

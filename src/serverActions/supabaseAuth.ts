@@ -54,10 +54,12 @@ export const signup = async ({
       throw new Error('ユーザーIDが取得できませんでした')
     }
 
-    await serverApi().user.create({
-      id: user.id,
-      email: user.email ?? '',
-      name: name
+    await prisma.user.create({
+      data: {
+        id: user.id,
+        email: user.email ?? '',
+        name: name
+      }
     })
 
     console.log('signup:', user.id)
@@ -89,6 +91,7 @@ export const signin = async ({
     })
 
     if (error) {
+      console.error('🚨 Sign-in error:', error.message)
       throw new Error(`ログイン中にエラーが発生しました: ${error.message}`)
     }
     if (!data) {

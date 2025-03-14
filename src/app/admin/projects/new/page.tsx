@@ -127,10 +127,9 @@ export default function NewProject() {
       <BackButton />
 
       <Card
-        shadow="sm"
-        padding="lg"
-        withBorder
-        style={{ maxWidth: '700px', margin: 'auto' }}
+        shadow="md"
+        padding="xl"
+        style={{ maxWidth: '700px', margin: 'auto', marginBottom: '48px' }}
       >
         {isProjectLoading ? (
           <Loader color="blue" />
@@ -202,7 +201,6 @@ export default function NewProject() {
                 }
                 type="date"
                 required
-                min={new Date().toISOString().split('T')[0]}
                 {...register('deadline')}
                 error={errors.deadline?.message}
                 size="md"
@@ -244,7 +242,7 @@ export default function NewProject() {
         opened={modalOpened}
         onClose={() => setModalOpened(false)}
         centered
-        transitionProps={{ duration: 0 }}
+        className="modal-content"
         styles={{
           overlay: {
             zIndex: 1001
@@ -253,14 +251,16 @@ export default function NewProject() {
             zIndex: 1002
           },
           content: {
-            zIndex: 1002
+            zIndex: 1003
           }
         }}
       >
-        <Title order={5} style={{ textAlign: 'center' }}>
+        <Text
+          style={{ textAlign: 'center', fontSize: '1.2rem', marginTop: '40px' }}
+        >
           案件が作成されました！
-        </Title>
-        <Group justify="center" mt="xl">
+        </Text>
+        <Group justify="center" mt="xl" className="modal-footer">
           <Button color="blue" onClick={() => router.push('/admin/projects')}>
             OK
           </Button>

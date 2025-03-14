@@ -1,5 +1,5 @@
 'use client'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { EntryStatus } from '@prisma/client'
 import {
@@ -15,6 +15,8 @@ import {
 } from '@mantine/core'
 import { clientApi } from '~/lib/trpc/client-api'
 import BackButton from '@/app/_components/BackButton'
+import { supabase } from '~/lib/supabase/browser'
+import { useQueryClient } from '@tanstack/react-query'
 
 // 日付フォーマット用のヘルパー関数
 const formatDate = (dateString: string) => {
@@ -40,12 +42,55 @@ const ENTRY_STATUS = {
 export default function ProjectDetail() {
   const router = useRouter()
   const params = useParams()
+  const queryClient = useQueryClient()
   const [modalOpened, setModalOpened] = useState(false)
   const [modalMessage, setModalMessage] = useState('')
+  const [isButtonDisabled, setIsButtonDisabled] = useState(false)
+  const [buttonCooldown, setButtonCooldown] = useState(false)
+  const [entryStatus, setEntryStatus] = useState<EntryStatus | null>(null)
+
+  // ボタンのクールダウンを設定
+  const setButtonCooldownTimer = () => {
+    setIsButtonDisabled(true)
+    setButtonCooldown(true)
+    setTimeout(() => {
+      setIsButtonDisabled(false)
+      setButtonCooldown(false)
+    }, 3000) // 3秒間のクールダウン
+  }
 
   // ユーザー情報を取得
-  const { data: currentUser } = clientApi.user.whoami.useQuery()
-  const userId = currentUser?.id ?? ''
+  const { data: user, isLoading: isUserLoading } =
+    clientApi.user.whoami.useQuery()
+  const [userId, setUserId] = useState<string | null>(null)
+
+  // ユーザー情報が取得できたらuserIdを設定
+  useEffect(() => {
+    if (user) {
+      setUserId(user.id)
+    }
+  }, [user])
+
+  // 認証状態の変更を監視
+  useEffect(() => {
+    const { data: authSubscription } = supabase.auth.onAuthStateChange(
+      async (_event, session) => {
+        console.log('Auth state changed:', _event, session?.user?.id)
+        if (session?.user) {
+          setUserId(session.user.id)
+        } else {
+          setUserId(null)
+        }
+      }
+    )
+
+    return () => {
+      authSubscription?.subscription.unsubscribe()
+    }
+  }, [])
+
+  // 認証状態に基づいてボタンの表示を制御
+  const isAuthenticated = !!user
 
   // tRPCを使用してプロジェクトデータを取得
   const { data: project, isLoading } = clientApi.project.find.useQuery<{
@@ -57,33 +102,64 @@ export default function ProjectDetail() {
     created_at: string
     creator_id: string
     skills: Array<{ skill: { id: string; name: string } }>
-  }>(params?.projectId as string)
+  }>(params?.projectId as string, {
+    enabled: !!params?.projectId,
+    staleTime: 0, // キャッシュを無効化
+    cacheTime: 0, // キャッシュを無効化
+    refetchOnMount: true, // マウント時に再取得
+    refetchOnReconnect: true // 再接続時に再取得
+  })
 
   // 現在のエントリー状態を取得
   const { data: currentEntry, refetch: refetchEntry } =
     clientApi.entry.find.useQuery(
       {
         project_id: params?.projectId as string,
-        user_id: userId
+        user_id: userId ?? ''
       },
       {
         enabled: !!userId && !!params?.projectId,
-        refetchOnWindowFocus: true
+        refetchOnWindowFocus: false,
+        staleTime: 0, // キャッシュを無効化
+        cacheTime: 0, // キャッシュを無効化
+        refetchOnMount: true, // マウント時に再取得
+        refetchOnReconnect: true, // 再接続時に再取得
+        retry: false,
+        onSuccess: (data) => {
+          if (data) {
+            setEntryStatus(data.status)
+          } else {
+            setEntryStatus(null)
+          }
+        }
       }
     )
+
+  // コンポーネントマウント時にキャッシュをクリア
+  useEffect(() => {
+    const clearCache = async () => {
+      // すべてのキャッシュをクリア
+      await queryClient.clear()
+      // 特定のクエリキーを無効化
+      queryClient.invalidateQueries(['entry'])
+      queryClient.invalidateQueries(['project'])
+      // 強制的に再取得
+      await refetchEntry()
+    }
+    clearCache()
+  }, [queryClient, refetchEntry])
 
   // エントリー作成のミューテーション
   const entryMutation = clientApi.entry.create.useMutation({
     onSuccess: async () => {
       await refetchEntry()
+      setEntryStatus(ENTRY_STATUS.PENDING)
       setModalMessage('エントリーしました。')
       setModalOpened(true)
     },
     onError: (error) => {
-      console.error('エントリーエラー:', error)
-      setModalMessage(
-        'エントリーに失敗しました。時間をおいて再度お試しください。'
-      )
+      console.error('エントリー作成エラー:', error)
+      setModalMessage('エラーが発生しました。時間をおいて再度お試しください。')
       setModalOpened(true)
     }
   })
@@ -92,105 +168,152 @@ export default function ProjectDetail() {
   const updateEntryMutation = clientApi.entry.update.useMutation({
     onSuccess: async () => {
       await refetchEntry()
+      // ステータスを更新
+      if (currentEntry) {
+        setEntryStatus(
+          currentEntry.status === ENTRY_STATUS.PENDING
+            ? ENTRY_STATUS.WITHDRAWN
+            : ENTRY_STATUS.PENDING
+        )
+      }
       setModalMessage('エントリーのステータスを更新しました。')
       setModalOpened(true)
     },
     onError: (error) => {
       console.error('エントリー更新エラー:', error)
-      setModalMessage(
-        'ステータスの更新に失敗しました。時間をおいて再度お試しください。'
-      )
+      setModalMessage('エラーが発生しました。時間をおいて再度お試しください。')
       setModalOpened(true)
     }
   })
 
   // エントリーボタンのクリックハンドラー
-  const handleEntry = async () => {
-    if (!project?.id || !userId) return
-
-    try {
-      // 既存のエントリーがある場合は更新、ない場合は新規作成
-      if (currentEntry?.status === ENTRY_STATUS.WITHDRAWN) {
-        await updateEntryMutation.mutateAsync({
-          project_id: project.id,
-          user_id: userId,
-          status: ENTRY_STATUS.PENDING
-        })
-      } else if (!currentEntry) {
-        await entryMutation.mutateAsync({
-          project_id: project.id,
-          status: ENTRY_STATUS.PENDING
-        })
-      }
-    } catch (error) {
-      console.error('エントリー処理でエラーが発生しました:', error)
+  const handleEntryToggle = async () => {
+    if (!isAuthenticated) {
+      setModalMessage('ログインが必要です。')
+      setModalOpened(true)
+      return
     }
-  }
 
-  // 取り下げボタンのクリックハンドラー
-  const handleWithdraw = async () => {
-    if (!project?.id || !userId || !currentEntry) return
+    if (buttonCooldown || isButtonDisabled) {
+      setModalMessage('操作は3秒後に再度お試しください。')
+      setModalOpened(true)
+      return
+    }
 
-    // PENDINGステータスの場合のみ取り下げ可能
-    if (currentEntry.status !== ENTRY_STATUS.PENDING) {
-      setModalMessage('保留中のエントリーのみ取り下げ可能です。')
+    const currentUserId = user?.id
+    if (!currentUserId) {
+      setModalMessage('ユーザー情報の取得に失敗しました。')
+      setModalOpened(true)
+      return
+    }
+
+    if (!project?.id) {
+      setModalMessage('プロジェクト情報の取得に失敗しました。')
       setModalOpened(true)
       return
     }
 
     try {
-      await updateEntryMutation.mutateAsync({
-        project_id: project.id,
-        user_id: userId,
-        status: ENTRY_STATUS.WITHDRAWN
-      })
+      setButtonCooldownTimer()
+
+      // 最新のエントリー状態を取得（userIdが存在する場合のみ）
+      if (userId) {
+        await refetchEntry()
+      }
+
+      // 既存のエントリーの有無を確認
+      if (currentEntry) {
+        // 既存のエントリーがある場合は更新のみ実行
+        switch (currentEntry.status) {
+          case ENTRY_STATUS.PENDING:
+            // 保留中の場合は取り下げに変更
+            await updateEntryMutation.mutateAsync({
+              project_id: project.id,
+              user_id: currentUserId,
+              status: ENTRY_STATUS.WITHDRAWN
+            })
+            break
+
+          case ENTRY_STATUS.WITHDRAWN:
+            // 取り下げ状態の場合は保留中に変更
+            await updateEntryMutation.mutateAsync({
+              project_id: project.id,
+              user_id: currentUserId,
+              status: ENTRY_STATUS.PENDING
+            })
+            break
+
+          case ENTRY_STATUS.APPROVED:
+          case ENTRY_STATUS.REJECTED:
+            // 承認済みまたは却下済みの場合は操作不可
+            setModalMessage('このステータスでは操作できません')
+            setModalOpened(true)
+            break
+
+          default:
+            setModalMessage('不正なステータスです')
+            setModalOpened(true)
+            break
+        }
+      } else {
+        // 新規エントリー作成
+        await entryMutation.mutateAsync({
+          project_id: project.id,
+          status: ENTRY_STATUS.PENDING,
+          entry_date: new Date().toISOString()
+        })
+      }
     } catch (error) {
-      console.error('取り下げ処理でエラーが発生しました:', error)
+      console.error('エントリー処理でエラーが発生しました:', error)
+      setModalMessage('エラーが発生しました。時間をおいて再度お試しください。')
+      setModalOpened(true)
     }
   }
 
   // ステータスに応じたボタンのラベルを取得
-  const getButtonLabel = (status?: EntryStatus) => {
+  const getButtonLabel = (status: EntryStatus | null) => {
+    if (!isAuthenticated) return 'ログインが必要です'
+    if (buttonCooldown) return '処理中...'
+
+    // 現在のステータスに応じてラベルを切り替え
+    if (!status) {
+      return 'この案件にエントリーする' // エントリーが存在しない場合
+    }
+
     switch (status) {
       case ENTRY_STATUS.PENDING:
-        return 'エントリーを取り下げる'
+        return 'エントリーを取り下げる' // 保留中の場合は取り下げ操作を表示
       case ENTRY_STATUS.WITHDRAWN:
-        return '再度エントリーする'
+        return '再度エントリーする' // 取り下げ状態の場合は再エントリーを表示
       case ENTRY_STATUS.APPROVED:
-        return '承認済み'
+        return '承認済み' // 承認済みの場合は操作不可
       case ENTRY_STATUS.REJECTED:
-        return '却下済み'
+        return '却下済み' // 却下済みの場合は操作不可
       default:
-        return 'この案件にエントリーする'
+        return 'この案件にエントリーする' // 初回エントリー時の表示
     }
   }
 
   // ステータスに応じたボタンの色を取得
-  const getButtonColor = (status?: EntryStatus) => {
+  const getButtonColor = (status: EntryStatus | null) => {
+    if (buttonCooldown) return 'gray'
+    if (!status) return 'blue'
     switch (status) {
       case ENTRY_STATUS.PENDING:
-        return 'red'
+        return 'red' // 保留中は取り下げ可能なので赤色
       case ENTRY_STATUS.WITHDRAWN:
-        return 'blue'
+        return 'blue' // 取り下げ状態は再エントリー可能なので青色
       default:
-        return 'blue'
-    }
-  }
-
-  // ステータスに応じたボタンのクリックハンドラーを取得
-  const getButtonHandler = (status?: EntryStatus) => {
-    switch (status) {
-      case ENTRY_STATUS.PENDING:
-        return handleWithdraw
-      case ENTRY_STATUS.WITHDRAWN:
-        return handleEntry
-      default:
-        return handleEntry
+        return 'blue' // その他の状態は青色
     }
   }
 
   // ステータスに応じたボタンの無効化状態を取得
-  const isButtonDisabled = (status?: EntryStatus) => {
+  const isButtonDisabledByStatus = (status: EntryStatus | null) => {
+    if (!isAuthenticated) return true
+    if (buttonCooldown) return true
+    if (!status) return false
+    // 承認済みまたは却下済みの場合はボタンを無効化
     return status === ENTRY_STATUS.APPROVED || status === ENTRY_STATUS.REJECTED
   }
 
@@ -208,7 +331,6 @@ export default function ProjectDetail() {
         }}
       >
         <Loader size="xl" />
-        <Text size="md">データを読み込んでいます...</Text>
       </div>
     )
   }
@@ -228,7 +350,8 @@ export default function ProjectDetail() {
         style={{
           textAlign: 'center',
           color: '#5a5a5a',
-          marginBottom: '32px'
+          marginBottom: '48px',
+          letterSpacing: '0.5px'
         }}
       >
         案件詳細
@@ -238,62 +361,80 @@ export default function ProjectDetail() {
 
       <Card
         shadow="sm"
-        padding="lg"
+        padding="xl"
         withBorder
-        style={{ maxWidth: '700px', margin: 'auto' }}
+        style={{ maxWidth: '700px', margin: 'auto', marginBottom: '48px' }}
       >
-        <Stack gap="lg">
-          <div style={{ marginBottom: '16px' }}>
-            <Text fw="bold" mb={8}>
+        <Stack gap="xl">
+          <div style={{ marginBottom: '24px' }}>
+            <Text fw="bold" mb={12} size="lg">
               案件作成日
             </Text>
-            <Text ml="sm">{formatDate(project.created_at)}</Text>
+            <Text ml="sm" size="md">
+              {formatDate(project.created_at)}
+            </Text>
           </div>
-          <div style={{ marginBottom: '16px' }}>
-            <Text fw="bold" mb={8}>
+          <div style={{ marginBottom: '24px' }}>
+            <Text fw="bold" mb={12} size="lg">
               案件名
             </Text>
-            <Text ml="sm">{project.title}</Text>
+            <Text ml="sm" size="md">
+              {project.title}
+            </Text>
           </div>
-          <div style={{ marginBottom: '16px' }}>
-            <Text fw="bold" mb={8}>
+          <div style={{ marginBottom: '24px' }}>
+            <Text fw="bold" mb={12} size="lg">
               概要
             </Text>
-            <Text ml="sm">{project.description}</Text>
+            <Text ml="sm" size="md" style={{ lineHeight: '1.8' }}>
+              {project.description}
+            </Text>
           </div>
-          <div style={{ marginBottom: '16px' }}>
-            <Text fw="bold" mb={8}>
+          <div style={{ marginBottom: '24px' }}>
+            <Text fw="bold" mb={12} size="lg">
               必要スキル
             </Text>
-            <Text ml="sm">
+            <Text ml="sm" size="md" style={{ lineHeight: '1.8' }}>
               {project.skills.map((s) => s.skill.name).join(', ')}
             </Text>
           </div>
-          <div style={{ marginBottom: '16px' }}>
-            <Text fw="bold" mb={8}>
+          <div style={{ marginBottom: '24px' }}>
+            <Text fw="bold" mb={12} size="lg">
               募集締切日
             </Text>
-            <Text ml="sm">
+            <Text ml="sm" size="md">
               {project.deadline ? formatDate(project.deadline) : '未設定'}
             </Text>
           </div>
-          <div style={{ marginBottom: '16px' }}>
-            <Text fw="bold" mb={8}>
+          <div style={{ marginBottom: '24px' }}>
+            <Text fw="bold" mb={12} size="lg">
               単価
             </Text>
-            <Text ml="sm">
+            <Text ml="sm" size="md">
               {project.price ? formatPrice(project.price) : '未設定'}
             </Text>
           </div>
 
-          <Text size="sm" c="dimmed" mb={8} ta="center">
+          <Text
+            size="sm"
+            c="dimmed"
+            mb={16}
+            ta="center"
+            style={{ lineHeight: '1.6' }}
+          >
             ※エントリーのステータスを取り下げに変更できるのは、保留中の時のみです
           </Text>
 
           {/* エントリーボタンの表示制御 */}
           <div>
             {currentEntry && (
-              <Text size="sm" ta="center" fw="bold" mb={8}>
+              <Text
+                size="md"
+                ta="center"
+                fw="bold"
+                mb={16}
+                style={{ letterSpacing: '0.5px' }}
+              >
                 現在のステータス：
                 {(() => {
                   switch (currentEntry.status) {
@@ -313,21 +454,19 @@ export default function ProjectDetail() {
             )}
 
             <Button
-              color={getButtonColor(currentEntry?.status)}
+              color={getButtonColor(entryStatus)}
               fullWidth
-              onClick={getButtonHandler(currentEntry?.status)}
+              onClick={handleEntryToggle}
               loading={entryMutation.isLoading || updateEntryMutation.isLoading}
-              disabled={isButtonDisabled(currentEntry?.status)}
+              disabled={
+                isButtonDisabledByStatus(entryStatus) || isButtonDisabled
+              }
               mt={8}
+              size="lg"
+              style={{ letterSpacing: '0.5px' }}
             >
-              {getButtonLabel(currentEntry?.status)}
+              {getButtonLabel(entryStatus)}
             </Button>
-
-            {isButtonDisabled(currentEntry?.status) && (
-              <Text size="sm" c="dimmed" ta="center" mt={8}>
-                このステータスでは操作できません
-              </Text>
-            )}
           </div>
         </Stack>
 
@@ -340,9 +479,35 @@ export default function ProjectDetail() {
             }
           }}
           centered
+          styles={{
+            overlay: {
+              zIndex: 1001
+            },
+            inner: {
+              zIndex: 1002
+            },
+            content: {
+              zIndex: 1002
+            },
+            header: {
+              justifyContent: 'center'
+            },
+            title: {
+              width: '100%',
+              textAlign: 'center'
+            }
+          }}
         >
-          <Text style={{ textAlign: 'center' }}>{modalMessage}</Text>
-          <Group justify="center" mt="md">
+          <Text
+            style={{
+              textAlign: 'center',
+              fontSize: '1.1rem',
+              lineHeight: '1.8'
+            }}
+          >
+            {modalMessage}
+          </Text>
+          <Group justify="center" mt="xl">
             <Button
               fullWidth
               onClick={() => {
@@ -351,6 +516,8 @@ export default function ProjectDetail() {
                   router.push('/entry-list')
                 }
               }}
+              size="md"
+              style={{ letterSpacing: '0.5px' }}
             >
               OK
             </Button>

@@ -89,15 +89,12 @@ export function AdminSigninForm() {
         管理者ログイン
       </Title>
       <Card
-        withBorder
         shadow="sm"
         radius="md"
         padding="xl"
         className="card"
         style={{ width: '100%', maxWidth: '500px', margin: '0 auto' }}
       >
-        <Divider my="lg" />
-
         <form onSubmit={handleSubmit(onAdminSignInSubmit)}>
           <Stack>
             <TextInput

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Table,
@@ -66,12 +66,21 @@ export default function EntryList() {
   const { data: entries = [], isLoading } = clientApi.entry.list.useQuery({
     status: selectedStatus === 'ALL' ? undefined : selectedStatus
   }) as { data: EntryType[]; isLoading: boolean }
-  const [sortedEntries, setSortedEntries] = useState<EntryType[]>([])
 
-  // エントリーが変更されたらソート済みリストを更新
-  useEffect(() => {
-    setSortedEntries(entries)
-  }, [entries])
+  // ソート済みエントリーを計算
+  const sortedEntries = useMemo(() => {
+    if (!sortBy) return entries
+    return [...entries].sort((a, b) => {
+      if (sortBy === 'date') {
+        return sortDirection === 'asc'
+          ? new Date(a.entry_date).getTime() - new Date(b.entry_date).getTime()
+          : new Date(b.entry_date).getTime() - new Date(a.entry_date).getTime()
+      }
+      return sortDirection === 'asc'
+        ? (a.project?.price || 0) - (b.project?.price || 0)
+        : (b.project?.price || 0) - (a.project?.price || 0)
+    })
+  }, [entries, sortBy, sortDirection])
 
   // ソート関数
   const sortData = (field: 'date' | 'price') => {
@@ -79,19 +88,6 @@ export default function EntryList() {
     const newDirection = isAsc ? 'desc' : 'asc'
     setSortBy(field)
     setSortDirection(newDirection)
-
-    const sortedList = [...entries].sort((a, b) => {
-      if (field === 'date') {
-        return isAsc
-          ? new Date(a.entry_date).getTime() - new Date(b.entry_date).getTime()
-          : new Date(b.entry_date).getTime() - new Date(a.entry_date).getTime()
-      }
-      return isAsc
-        ? (a.project?.price || 0) - (b.project?.price || 0)
-        : (b.project?.price || 0) - (a.project?.price || 0)
-    })
-
-    setSortedEntries(sortedList)
   }
 
   const getSortIcon = (field: 'date' | 'price') => {
@@ -111,13 +107,10 @@ export default function EntryList() {
           justifyContent: 'center',
           alignItems: 'center',
           minHeight: 'calc(100vh - 60px)',
-          width: '100%',
-          flexDirection: 'column',
-          gap: '24px'
+          width: '100%'
         }}
       >
         <Loader size="xl" />
-        <Text size="md">データを読み込んでいます...</Text>
       </div>
     )
   }
@@ -129,8 +122,9 @@ export default function EntryList() {
         style={{
           textAlign: 'center',
           color: '#5a5a5a',
-          marginTop: '32px',
-          marginBottom: '32px'
+          marginTop: '48px',
+          marginBottom: '48px',
+          letterSpacing: '0.5px'
         }}
       >
         エントリー済み一覧
@@ -141,11 +135,11 @@ export default function EntryList() {
       <div
         style={{
           maxWidth: '1000px',
-          margin: '20px auto',
+          margin: '32px auto',
           padding: '0 20px'
         }}
       >
-        <Group justify="flex-end" mb="md">
+        <Group justify="flex-end" mb="xl">
           <Select
             value={selectedStatus}
             onChange={(value) =>
@@ -159,7 +153,7 @@ export default function EntryList() {
         </Group>
       </div>
 
-      <div className="table-container">
+      <div className="table-container" style={{ marginBottom: '48px' }}>
         <Table
           style={{
             width: '100%',
@@ -176,12 +170,13 @@ export default function EntryList() {
                   textAlign: 'center',
                   width: '120px',
                   border: '1px solid #e0e0e0',
-                  padding: '12px'
+                  padding: '16px',
+                  letterSpacing: '0.5px'
                 }}
               >
                 <UnstyledButton onClick={() => sortData('date')}>
                   <Group justify="center" gap="xs">
-                    <Text>エントリー日</Text>
+                    <Text size="md">エントリー日</Text>
                     {getSortIcon('date')}
                   </Group>
                 </UnstyledButton>
@@ -191,22 +186,24 @@ export default function EntryList() {
                   textAlign: 'center',
                   width: '400px',
                   border: '1px solid #e0e0e0',
-                  padding: '12px'
+                  padding: '16px',
+                  letterSpacing: '0.5px'
                 }}
               >
-                案件名
+                <Text size="md">案件名</Text>
               </Table.Th>
               <Table.Th
                 style={{
                   textAlign: 'center',
                   width: '120px',
                   border: '1px solid #e0e0e0',
-                  padding: '12px'
+                  padding: '16px',
+                  letterSpacing: '0.5px'
                 }}
               >
                 <UnstyledButton onClick={() => sortData('price')}>
                   <Group justify="center" gap="xs">
-                    <Text>単価</Text>
+                    <Text size="md">単価</Text>
                     {getSortIcon('price')}
                   </Group>
                 </UnstyledButton>
@@ -216,10 +213,11 @@ export default function EntryList() {
                   textAlign: 'center',
                   width: '120px',
                   border: '1px solid #e0e0e0',
-                  padding: '12px'
+                  padding: '16px',
+                  letterSpacing: '0.5px'
                 }}
               >
-                ステータス
+                <Text size="md">ステータス</Text>
               </Table.Th>
             </Table.Tr>
           </Table.Thead>
@@ -227,18 +225,45 @@ export default function EntryList() {
             {sortedEntries.length > 0 ? (
               sortedEntries.map((entry) => (
                 <Table.Tr key={`${entry.project_id}_${entry.user_id}`}>
-                  <Table.Td style={{ textAlign: 'center' }}>
+                  <Table.Td
+                    style={{
+                      textAlign: 'center',
+                      border: '1px solid #e0e0e0',
+                      padding: '16px',
+                      lineHeight: '1.6'
+                    }}
+                  >
                     {formatDate(entry.entry_date)}
                   </Table.Td>
-                  <Table.Td style={{ textAlign: 'center' }}>
+                  <Table.Td
+                    style={{
+                      textAlign: 'center',
+                      border: '1px solid #e0e0e0',
+                      padding: '16px',
+                      lineHeight: '1.6'
+                    }}
+                  >
                     {entry.project?.title || '不明'}
                   </Table.Td>
-                  <Table.Td style={{ textAlign: 'center' }}>
+                  <Table.Td
+                    style={{
+                      textAlign: 'center',
+                      border: '1px solid #e0e0e0',
+                      padding: '16px',
+                      lineHeight: '1.6'
+                    }}
+                  >
                     {entry.project?.price
                       ? `${entry.project.price.toLocaleString()}円`
                       : '未設定'}
                   </Table.Td>
-                  <Table.Td style={{ textAlign: 'center' }}>
+                  <Table.Td
+                    style={{
+                      textAlign: 'center',
+                      border: '1px solid #e0e0e0',
+                      padding: '16px'
+                    }}
+                  >
                     {getStatusDisplay(entry.status)}
                   </Table.Td>
                 </Table.Tr>
@@ -246,10 +271,14 @@ export default function EntryList() {
             ) : (
               <Table.Tr>
                 <Table.Td
-                  colSpan={4}
-                  style={{ textAlign: 'center', padding: '20px' }}
+                  colSpan={5}
+                  style={{
+                    textAlign: 'center',
+                    padding: '20px',
+                    marginBottom: '48px'
+                  }}
                 >
-                  データがありません
+                  エントリーはありません
                 </Table.Td>
               </Table.Tr>
             )}

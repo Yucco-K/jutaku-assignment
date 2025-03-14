@@ -222,6 +222,11 @@ export default function EditProject() {
                 </span>
               }
               type="date"
+              min={
+                new Date(new Date().setDate(new Date().getDate() + 1))
+                  .toISOString()
+                  .split('T')[0]
+              }
               {...register('deadline')}
               error={errors.deadline?.message}
               size="md"

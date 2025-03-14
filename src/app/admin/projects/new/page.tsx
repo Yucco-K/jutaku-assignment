@@ -201,6 +201,11 @@ export default function NewProject() {
                 }
                 type="date"
                 required
+                min={
+                  new Date(new Date().setDate(new Date().getDate() + 1))
+                    .toISOString()
+                    .split('T')[0]
+                }
                 {...register('deadline')}
                 error={errors.deadline?.message}
                 size="md"

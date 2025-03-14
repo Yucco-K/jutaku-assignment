@@ -15,7 +15,8 @@ import {
   Popover,
   Text,
   Group,
-  Loader
+  Loader,
+  Modal
 } from '@mantine/core'
 import { clientApi } from '~/lib/trpc/client-api'
 import BackButton from '@/app/_components/BackButton'
@@ -257,46 +258,34 @@ export default function EditProject() {
         </form>
       </Card>
 
-      <Popover
+      <Modal
         opened={modalOpened}
         onClose={() => setModalOpened(false)}
-        position="top"
-        withArrow
-        shadow="md"
+        centered
+        className="modal-content"
         styles={{
-          dropdown: {
-            padding: '20px',
-            borderRadius: '8px',
-            backgroundColor: '#fff',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-            border: '1px solid #e0e0e0'
+          overlay: {
+            zIndex: 1001
+          },
+          inner: {
+            zIndex: 1002
+          },
+          content: {
+            zIndex: 1003
           }
         }}
       >
-        <Popover.Target>
-          <div style={{ display: 'none' }} />
-        </Popover.Target>
-        <Popover.Dropdown>
-          <Text
-            style={{
-              textAlign: 'center',
-              fontSize: '1.2rem',
-              marginBottom: '16px'
-            }}
-          >
-            案件を更新しました！
-          </Text>
-          <Group justify="center">
-            <Button
-              color="blue"
-              onClick={() => router.push('/admin/projects')}
-              size="sm"
-            >
-              OK
-            </Button>
-          </Group>
-        </Popover.Dropdown>
-      </Popover>
+        <Text
+          style={{ textAlign: 'center', fontSize: '1.2rem', marginTop: '40px' }}
+        >
+          案件を更新しました！
+        </Text>
+        <Group justify="center" mt="xl" className="modal-footer">
+          <Button color="blue" onClick={() => router.push('/admin/projects')}>
+            OK
+          </Button>
+        </Group>
+      </Modal>
     </>
   )
 }

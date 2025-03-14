@@ -149,11 +149,11 @@ export default function AdminProjectDetail() {
   }
 
   const handleStatusUpdate = async () => {
-    if (!selectedEntry || !newStatus || !params?.projectId) return
+    if (!selectedEntry || !newStatus) return
 
     try {
       await updateEntryMutation.mutateAsync({
-        project_id: params.projectId as string,
+        project_id: params?.projectId as string,
         user_id: selectedEntry.user_id,
         status: newStatus
       })
@@ -256,8 +256,7 @@ export default function AdminProjectDetail() {
                     backgroundColor: '#E3F2FD',
                     fontWeight: 'bold',
                     border: '1px solid #e0e0e0',
-                    padding: '12px',
-                    textAlign: 'center'
+                    padding: '12px'
                   }}
                 >
                   {label}
@@ -265,8 +264,7 @@ export default function AdminProjectDetail() {
                 <Table.Td
                   style={{
                     border: '1px solid #e0e0e0',
-                    padding: '12px',
-                    textAlign: 'center'
+                    padding: '12px'
                   }}
                 >
                   {value}

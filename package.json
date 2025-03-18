@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "setup": "rimraf node_modules && bun install && cp .env.example .env && bun run db:up && bun run db:migrate && bun run db:seed && npx simple-git-hooks",
-    "dev": "cross-env TZ=Etc/UTC next dev --turbopack",
+    "dev": "TZ='Etc/UTC' next dev",
     "build": "prisma migrate deploy && prisma generate && next build",
     "start": "next start",
     "biome:check": "biome check .",
@@ -21,18 +21,15 @@
     "test:unit": "bun test --watch",
     "dev-deploy": "vercel",
     "prod-deploy": "vercel --prod",
-    "deps:update": "bunx npm-check-updates --interactive --format group",
-    "lint": "next lint"
+    "deps:update": "bunx npm-check-updates --interactive --format group"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.4",
-    "@mantine/core": "^7.17.1",
-    "@mantine/dates": "^7.17.1",
+    "@mantine/core": "^7.7.0",
+    "@mantine/dates": "^7.7.0",
     "@mantine/hooks": "^7.7.0",
-    "@mantine/modals": "^7.17.1",
-    "@mantine/notifications": "^7.17.1",
-    "@prisma/client": "^6.5.0",
-    "@supabase/auth-helpers-nextjs": "^0.10.0",
+    "@mantine/modals": "^7.7.0",
+    "@prisma/client": "5.11.0",
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.48.1",
     "@tanstack/react-query": "^4.18.0",
@@ -43,8 +40,7 @@
     "@vercel/edge-config": "^1.4.0",
     "dayjs": "^1.11.10",
     "jsonwebtoken": "^9.0.2",
-    "next": "^15.2.2",
-    "next-auth": "^4.24.11",
+    "next": "^14",
     "nextjs-routes": "^2.2.5",
     "react": "^18",
     "react-dom": "^18",
@@ -56,11 +52,9 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^1.6.1",
-    "@mermaid-js/mermaid-cli": "^11.4.2",
-    "@swc/helpers": "^0.5.15",
+    "@mermaid-js/mermaid-cli": "^10.8.0",
     "@types/bun": "latest",
     "@types/jsonwebtoken": "^9.0.6",
-    "@types/node": "^22.13.10",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "cross-env": "^7.0.3",
@@ -68,12 +62,12 @@
     "postcss": "^8.4.38",
     "postcss-preset-mantine": "^1.13.0",
     "postcss-simple-vars": "^7.0.1",
-    "prisma": "^6.5.0",
-    "prisma-erd-generator": "^2.0.4",
+    "prisma": "^5.11.0",
+    "prisma-erd-generator": "^1.11.2",
     "rimraf": "^5.0.5",
     "simple-git-hooks": "^2.11.0",
-    "typescript": "^5.8.2",
-    "vercel": "^41.4.1"
+    "typescript": "latest",
+    "vercel": "^33.6.1"
   },
   "simple-git-hooks": {
     "pre-commit": "bun run biome:apply"

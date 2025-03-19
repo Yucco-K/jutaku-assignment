@@ -17,7 +17,6 @@ declare module "nextjs-routes" {
     | DynamicRoute<"/admin/projects/[projectId]/edit", { "projectId": string }>
     | StaticRoute<"/admin/projects/new">
     | StaticRoute<"/admin/signin">
-    | DynamicRoute<"/api/auth/[...nextauth]", { "nextauth": string[] }>
     | StaticRoute<"/api/auth/callback">
     | StaticRoute<"/api/cron">
     | DynamicRoute<"/api/trpc/[trpc]", { "trpc": string }>

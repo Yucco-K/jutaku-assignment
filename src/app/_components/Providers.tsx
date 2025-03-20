@@ -2,12 +2,10 @@
 
 import { MantineProvider } from '@mantine/core'
 import { useEffect } from 'react'
-import { createClient } from '~/lib/supabase/browser'
+import { supabase } from '~/lib/supabase/browser'
 
 export function Providers({ children }: { children: React.ReactNode }) {
   useEffect(() => {
-    const supabase = createClient()
-
     const {
       data: { subscription }
     } = supabase.auth.onAuthStateChange((event, session) => {

@@ -17,8 +17,7 @@ import {
   Container,
   Group,
   Text,
-  Loader,
-  Notification
+  Loader
 } from '@mantine/core'
 
 const signInSchema = z.object({
@@ -34,8 +33,7 @@ type SignInFormData = z.infer<typeof signInSchema>
 
 export function SigninForm() {
   const router = useRouter()
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [errorMessage, setErrorMessage] = useState<string | null>('')
   const [attemptCount, setAttemptCount] = useState(0)
   const [isCoolDown, setIsCoolDown] = useState(false)
   const [coolDownTime, setCoolDownTime] = useState(300) // 5分 = 300秒
@@ -61,17 +59,14 @@ export function SigninForm() {
   }, [isCoolDown, coolDownTime])
 
   const onSignInSubmit = async (data: SignInFormData) => {
-    setErrorMessage(null)
-    setSuccessMessage(null)
     try {
+      setErrorMessage(null)
       const result = await signin(data)
       if (result.success) {
-        setSuccessMessage('ログインしました。')
         notifications.show({
-          title: 'ログイン成功',
+          title: '成功',
           message: 'ログインしました。',
-          color: 'green',
-          autoClose: 3000
+          color: 'green'
         })
         setTimeout(() => {
           router.push('/projects')
@@ -85,12 +80,10 @@ export function SigninForm() {
         error instanceof Error
           ? error.message
           : 'ログインに失敗しました。メールアドレスとパスワードを確認してください。'
-      setErrorMessage(errorMsg)
       notifications.show({
         title: 'ログインエラー',
         message: errorMsg,
-        color: 'red',
-        autoClose: 3000
+        color: 'red'
       })
 
       // 試行回数をカウントアップ
@@ -173,26 +166,6 @@ export function SigninForm() {
           </Link>
         </Text>
       </Card>
-      {successMessage && (
-        <Notification
-          color="green"
-          onClose={() => setSuccessMessage(null)}
-          mt="md"
-          style={{ maxWidth: '500px', margin: '20px auto 0' }}
-        >
-          {successMessage}
-        </Notification>
-      )}
-      {errorMessage && (
-        <Notification
-          color="red"
-          onClose={() => setErrorMessage(null)}
-          mt="md"
-          style={{ maxWidth: '500px', margin: '20px auto 0' }}
-        >
-          {errorMessage}
-        </Notification>
-      )}
     </Container>
   )
 }

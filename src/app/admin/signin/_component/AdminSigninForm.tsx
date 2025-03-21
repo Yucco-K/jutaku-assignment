@@ -16,7 +16,6 @@ import {
   Container,
   Group,
   Loader,
-  Notification,
   Text
 } from '@mantine/core'
 
@@ -34,7 +33,6 @@ type AdminSignInFormData = z.infer<typeof adminSignInSchema>
 export function AdminSigninForm() {
   const router = useRouter()
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [attemptCount, setAttemptCount] = useState(0)
   const [isCoolDown, setIsCoolDown] = useState(false)
   const [coolDownTime, setCoolDownTime] = useState(300) // 5分 = 300秒
@@ -61,8 +59,8 @@ export function AdminSigninForm() {
 
   const onAdminSignInSubmit = async (data: AdminSignInFormData) => {
     setErrorMessage(null)
-    setSuccessMessage(null)
     try {
+      setErrorMessage(null)
       const result = await signin(data)
       if (!result.error) {
         setTimeout(() => {
@@ -79,8 +77,7 @@ export function AdminSigninForm() {
       notifications.show({
         title: 'ログインエラー',
         message: errorMsg,
-        color: 'red',
-        autoClose: 3000
+        color: 'red'
       })
 
       // 試行回数をカウントアップ
@@ -155,26 +152,6 @@ export function AdminSigninForm() {
           </Stack>
         </form>
       </Card>
-      {successMessage && (
-        <Notification
-          color="green"
-          onClose={() => setSuccessMessage(null)}
-          mt="md"
-          style={{ maxWidth: '500px', margin: '20px auto 0' }}
-        >
-          {successMessage}
-        </Notification>
-      )}
-      {errorMessage && (
-        <Notification
-          color="red"
-          onClose={() => setErrorMessage(null)}
-          mt="md"
-          style={{ maxWidth: '500px', margin: '20px auto 0' }}
-        >
-          {errorMessage}
-        </Notification>
-      )}
     </Container>
   )
 }

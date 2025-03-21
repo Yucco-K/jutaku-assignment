@@ -2,6 +2,8 @@
 
 import { MantineProvider } from '@mantine/core'
 import { Notifications } from '@mantine/notifications'
+import '@mantine/core/styles.css'
+import '@mantine/notifications/styles.css'
 import { useEffect } from 'react'
 import { supabase } from '~/lib/supabase/browser'
 

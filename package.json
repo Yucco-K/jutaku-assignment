@@ -29,6 +29,7 @@
     "@mantine/dates": "^7.7.0",
     "@mantine/hooks": "^7.7.0",
     "@mantine/modals": "^7.7.0",
+    "@mantine/notifications": "^7.17.2",
     "@prisma/client": "5.11.0",
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.48.1",

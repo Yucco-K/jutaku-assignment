@@ -24,16 +24,16 @@ model User {
 }
 
 model Project {
-  id          String  @id @default(uuid())
+  id          String   @id @default(cuid())
   title       String
   description String?
   price       Int?
   deadline    DateTime?
   created_at  DateTime @default(now())
-  creator     User     @relation(fields: [creator_id], references: [id], onDelete: Cascade)
   creator_id  String
-  entries     Entry[]
+  creator     User     @relation(fields: [creator_id], references: [id])
   skills      ProjectSkill[]
+  entries     Entry[]
 }
 
 model Skill {
@@ -55,6 +55,7 @@ enum EntryStatus {
   PENDING
   APPROVED
   REJECTED
+  WITHDRAWN
 }
 
 model Entry {

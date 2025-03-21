@@ -3,12 +3,16 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import { TRPCProvider } from '~/lib/trpc/client-api'
 import '@mantine/core/styles.css'
-import { Box, ColorSchemeScript, Flex, MantineProvider } from '@mantine/core'
+import { ColorSchemeScript } from '@mantine/core'
+import { Providers } from './_components/Providers'
+import ClientWrapper from './_components/ClientWrapper'
+
+const PUBLIC_PATHS = ['/', '/signup', '/admin/signin']
 
 const inter = Inter({ subsets: ['latin'] })
 export const metadata: Metadata = {
-  title: 'Template App',
-  description: 'Template App Description'
+  title: 'Project Matching Platform',
+  description: 'Project Matching Platform Description'
 }
 
 export default function RootLayout({
@@ -23,13 +27,9 @@ export default function RootLayout({
           <ColorSchemeScript />
         </head>
         <body className={inter.className}>
-          <MantineProvider>
-            <Flex h="100vh">
-              <Box h="100vh" style={{ flex: 1, overflowY: 'auto' }}>
-                {children}
-              </Box>
-            </Flex>
-          </MantineProvider>
+          <Providers>
+            <ClientWrapper>{children}</ClientWrapper>
+          </Providers>
         </body>
       </html>
     </TRPCProvider>

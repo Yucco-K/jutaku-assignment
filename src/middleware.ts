@@ -95,43 +95,6 @@ async function updateSession(req: NextRequest) {
       }
     }
 
-    // ✅ 認証済みユーザーのリダイレクト
-    if (
-      session &&
-      (req.nextUrl.pathname === '/' || req.nextUrl.pathname === '/signup')
-    ) {
-      const { data: user, error } = await supabase.auth.getUser()
-
-      if (error || !user) {
-        console.error('Failed to get user:', error)
-        return res
-      }
-
-      const role = user?.user?.user_metadata?.role
-
-      if (role === 'ADMIN') {
-        return NextResponse.redirect(new URL('/admin/projects', req.url))
-      }
-      if (role === 'USER') {
-        return NextResponse.redirect(new URL('/projects', req.url))
-      }
-    }
-
-    // ✅ 一般ユーザーが `/admin` にアクセスした場合、リダイレクト
-    if (req.nextUrl.pathname.startsWith('/admin/projects')) {
-      const { data: user, error } = await supabase.auth.getUser()
-
-      if (error || !user) {
-        console.error('Failed to get user:', error)
-        return NextResponse.redirect(new URL('/', req.url))
-      }
-
-      const role = user.user?.user_metadata?.role
-      if (role !== 'ADMIN') {
-        return NextResponse.redirect(new URL('/', req.url))
-      }
-    }
-
     return res
   } catch (e) {
     console.error('Error in middleware:', e)

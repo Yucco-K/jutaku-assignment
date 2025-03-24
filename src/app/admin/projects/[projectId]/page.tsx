@@ -17,6 +17,7 @@ import { clientApi } from '~/lib/trpc/client-api'
 import BackButton from '@/app/_components/BackButton'
 import ActionButtons from '@/app/_component/ActionButtons'
 import { FaFilter } from 'react-icons/fa'
+import { useAdminAccessGuard } from '@/hooks/useAdminAccessGuard'
 
 const STATUS_OPTIONS = [
   { value: 'ALL', label: '全て' },
@@ -42,6 +43,7 @@ const SELECTABLE_STATUSES = [
 export default function AdminProjectDetail() {
   const router = useRouter()
   const params = useParams()
+  const { user, isLoading: isUserLoading } = useAdminAccessGuard()
   const [deleteModalOpened, setDeleteModalOpened] = useState(false)
   const [entryModalOpened, setEntryModalOpened] = useState(false)
   const [confirmModalOpened, setConfirmModalOpened] = useState(false)
@@ -162,7 +164,7 @@ export default function AdminProjectDetail() {
     }
   }
 
-  if (isLoading) {
+  if (isLoading || isUserLoading) {
     return (
       <div
         style={{

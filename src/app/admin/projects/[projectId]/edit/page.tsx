@@ -12,7 +12,6 @@ import {
   Textarea,
   Stack,
   MultiSelect,
-  Popover,
   Text,
   Group,
   Loader,
@@ -20,6 +19,7 @@ import {
 } from '@mantine/core'
 import { clientApi } from '~/lib/trpc/client-api'
 import BackButton from '@/app/_components/BackButton'
+import { useAdminAccessGuard } from '@/hooks/useAdminAccessGuard'
 
 // バリデーションスキーマ
 const schema = z.object({
@@ -36,6 +36,7 @@ export default function EditProject() {
   const router = useRouter()
   const params = useParams()
   const [modalOpened, setModalOpened] = useState(false)
+  const { user, isLoading: isUserLoading } = useAdminAccessGuard()
 
   // プロジェクトとスキル一覧を取得
   const { data: project, isLoading: isProjectLoading } =
@@ -111,7 +112,7 @@ export default function EditProject() {
     }
   }
 
-  if (isProjectLoading) {
+  if (isProjectLoading || isUserLoading) {
     return (
       <div
         style={{

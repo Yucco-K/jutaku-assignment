@@ -22,6 +22,7 @@ import { clientApi } from '~/lib/trpc/client-api'
 import type { TRPCClientErrorLike } from '@trpc/client'
 import type { DefaultErrorShape } from '@trpc/server'
 import BackButton from '@/app/_components/BackButton'
+import { useAdminAccessGuard } from '@/hooks/useAdminAccessGuard'
 
 // フォームスキーマ定義
 const projectSchema = z.object({
@@ -36,6 +37,7 @@ export default function NewProject() {
   const router = useRouter()
   const [modalOpened, setModalOpened] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string>('')
+  const { user, isLoading: isUserLoading } = useAdminAccessGuard()
 
   // tRPC でプロジェクト一覧とスキル一覧を取得
   const { data: projects, isLoading: isProjectLoading } =
@@ -131,8 +133,18 @@ export default function NewProject() {
         padding="xl"
         style={{ maxWidth: '700px', margin: 'auto', marginBottom: '48px' }}
       >
-        {isProjectLoading ? (
-          <Loader color="blue" />
+        {isProjectLoading || isUserLoading ? (
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              minHeight: 'calc(100vh - 60px)', // ナビバー除外など必要に応じて調整
+              width: '100%'
+            }}
+          >
+            <Loader color="blue" />
+          </div>
         ) : (
           <form onSubmit={handleSubmit(onSubmit)}>
             <Stack gap="xl">

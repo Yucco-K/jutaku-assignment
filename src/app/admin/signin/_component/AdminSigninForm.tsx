@@ -58,11 +58,18 @@ export function AdminSigninForm() {
   }, [isCoolDown, coolDownTime])
 
   const onAdminSignInSubmit = async (data: AdminSignInFormData) => {
-    setErrorMessage(null)
     try {
       setErrorMessage(null)
       const result = await signin(data)
+
       if (!result.error) {
+        // ✅ 成功時の通知を追加
+        notifications.show({
+          title: '成功',
+          message: '管理者用ページにログインしました',
+          color: 'green'
+        })
+
         setTimeout(() => {
           router.push('/admin/projects')
         }, 1000)

@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { signin } from '@/serverActions/supabaseAuth'
+import { notifications } from '@mantine/notifications'
 import { useRouter } from 'next/navigation'
 import {
   Card,
@@ -14,9 +15,8 @@ import {
   Stack,
   Container,
   Group,
-  Divider,
-  Text,
-  Loader
+  Loader,
+  Text
 } from '@mantine/core'
 
 const adminSignInSchema = z.object({
@@ -33,57 +33,96 @@ type AdminSignInFormData = z.infer<typeof adminSignInSchema>
 export function AdminSigninForm() {
   const router = useRouter()
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [attemptCount, setAttemptCount] = useState(0)
+  const [isCoolDown, setIsCoolDown] = useState(false)
+  const [coolDownTime, setCoolDownTime] = useState(300) // 5分 = 300秒
+
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting }
   } = useForm<AdminSignInFormData>({ resolver: zodResolver(adminSignInSchema) })
 
+  // クールダウンのカウントダウン
+  React.useEffect(() => {
+    let timer: ReturnType<typeof setInterval>
+    if (isCoolDown && coolDownTime > 0) {
+      timer = setInterval(() => {
+        setCoolDownTime((prev) => prev - 1)
+      }, 1000)
+    } else if (coolDownTime === 0) {
+      setIsCoolDown(false)
+      setAttemptCount(0)
+    }
+    return () => clearInterval(timer)
+  }, [isCoolDown, coolDownTime])
+
   const onAdminSignInSubmit = async (data: AdminSignInFormData) => {
-    setErrorMessage(null)
     try {
-      await signin(data)
-      router.push('/admin/projects')
+      setErrorMessage(null)
+      const result = await signin(data)
+
+      if (!result.error) {
+        // ✅ 成功時の通知を追加
+        notifications.show({
+          title: '成功',
+          message: '管理者用ページにログインしました',
+          color: 'green'
+        })
+
+        setTimeout(() => {
+          router.push('/admin/projects')
+        }, 1000)
+      }
     } catch (error) {
       console.error('ログインエラー:', error)
-      setErrorMessage(
-        'ログインに失敗しました。メールアドレスとパスワードを確認してください。'
-      )
+      const errorMsg =
+        error instanceof Error
+          ? error.message
+          : 'ログインに失敗しました。メールアドレスとパスワードを確認してください。'
+      setErrorMessage(errorMsg)
+      notifications.show({
+        title: 'ログインエラー',
+        message: errorMsg,
+        color: 'red'
+      })
+
+      // 試行回数をカウントアップ
+      const newAttemptCount = attemptCount + 1
+      setAttemptCount(newAttemptCount)
+
+      // 10回失敗したらクールダウン開始
+      if (newAttemptCount >= 5) {
+        setIsCoolDown(true)
+        setCoolDownTime(300)
+        setErrorMessage(
+          'パスワードの入力に10回失敗しました。5分間待ってから再度お試しください。'
+        )
+      }
     }
   }
 
   return (
     <Container
-      size="100%"
+      size={500}
       my={80}
-      className="form-container flex justify-center items-center h-screen"
+      className="form-container"
+      style={{ padding: '0 20px' }}
     >
       <Title
-        order={2}
+        order={3}
         className="title"
-        style={{ textAlign: 'center', color: '#5a5a5a', marginBottom: '2rem' }}
+        style={{ textAlign: 'center', color: '#5a5a5a', marginBottom: '40px' }}
       >
         管理者ログイン
       </Title>
       <Card
-        withBorder
         shadow="sm"
         radius="md"
         padding="xl"
         className="card"
-        style={{ maxWidth: '500px', margin: '0 auto' }}
+        style={{ width: '100%', maxWidth: '500px', margin: '0 auto' }}
       >
-        <Divider my="lg" />
-
-        {errorMessage && (
-          <Text
-            className="form-error"
-            style={{ textAlign: 'center', color: 'red', marginBottom: '12px' }}
-          >
-            {errorMessage}
-          </Text>
-        )}
-
         <form onSubmit={handleSubmit(onAdminSignInSubmit)}>
           <Stack>
             <TextInput
@@ -92,7 +131,7 @@ export function AdminSigninForm() {
               placeholder="email"
               {...register('email')}
               error={errors.email?.message}
-              disabled={isSubmitting}
+              disabled={isSubmitting || isCoolDown}
             />
             <PasswordInput
               label={<span className="form-label">パスワード</span>}
@@ -100,10 +139,20 @@ export function AdminSigninForm() {
               placeholder="password"
               {...register('password')}
               error={errors.password?.message}
-              disabled={isSubmitting}
+              disabled={isSubmitting || isCoolDown}
             />
+            {isCoolDown && (
+              <Text c="red" size="sm" ta="center">
+                残り時間: {Math.floor(coolDownTime / 60)}分{coolDownTime % 60}秒
+              </Text>
+            )}
             <Group className="button-group flex justify-center" my={12}>
-              <Button type="submit" loading={isSubmitting} fullWidth>
+              <Button
+                type="submit"
+                loading={isSubmitting}
+                fullWidth
+                disabled={isCoolDown}
+              >
                 {isSubmitting ? <Loader size="sm" color="white" /> : 'ログイン'}
               </Button>
             </Group>

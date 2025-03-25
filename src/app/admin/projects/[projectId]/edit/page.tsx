@@ -1,5 +1,5 @@
 'use client'
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -12,18 +12,22 @@ import {
   Textarea,
   Stack,
   MultiSelect,
-  Modal,
   Text,
   Group,
-  Loader
+  Loader,
+  Modal
 } from '@mantine/core'
-import useProjectStore from '@/store/projectStore'
+import { clientApi } from '~/lib/trpc/client-api'
+import BackButton from '@/app/_components/BackButton'
+import { useAdminAccessGuard } from '@/hooks/useAdminAccessGuard'
 
-// ✅ バリデーションスキーマ
+// バリデーションスキーマ
 const schema = z.object({
-  name: z.string().min(1, '案件名は必須です'),
+  title: z.string().min(1, '案件名は必須です'),
   description: z.string().min(1, '概要は必須です'),
-  skills: z.array(z.string()).min(1, '必要なスキルは1つ以上選択してください'),
+  skillNames: z
+    .array(z.string())
+    .min(1, '必要なスキルは1つ以上選択してください'),
   deadline: z.string().min(1, '募集締切日は必須です'),
   price: z.string().min(1, '単価は必須です')
 })
@@ -31,65 +35,103 @@ const schema = z.object({
 export default function EditProject() {
   const router = useRouter()
   const params = useParams()
-  const projectId =
-    typeof params?.projectId === 'string' ? params.projectId : ''
-
-  const { selectedProject, loadProjectById, updateProject } = useProjectStore()
   const [modalOpened, setModalOpened] = useState(false)
+  const { user, isLoading: isUserLoading } = useAdminAccessGuard()
+
+  // プロジェクトとスキル一覧を取得
+  const { data: project, isLoading: isProjectLoading } =
+    clientApi.project.find.useQuery<{
+      id: string
+      title: string
+      description: string | null
+      price: number | null
+      deadline: string | null
+      created_at: string
+      creator_id: string
+      skills: Array<{ skill: { id: string; name: string } }>
+    }>(params?.projectId as string)
+
+  const { data: skills = [] } = clientApi.skill.list.useQuery()
+
+  // プロジェクト更新のミューテーション
+  const updateMutation = clientApi.project.update.useMutation()
+  const updateSkillsMutation = clientApi.project.updateSkills.useMutation()
 
   const {
     register,
     handleSubmit,
     setValue,
-    reset,
     watch,
     formState: { errors, isSubmitting }
   } = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema)
   })
 
-  const skills = watch('skills')
+  const selectedSkills = watch('skillNames') || []
 
-  // ✅ 初回ロード時にプロジェクトデータを取得
-  useEffect(() => {
-    if (projectId) {
-      loadProjectById(projectId)
+  // プロジェクトデータをフォームに設定
+  React.useEffect(() => {
+    if (project) {
+      setValue('title', project.title)
+      setValue('description', project.description || '')
+      setValue(
+        'skillNames',
+        project.skills.map((s) => s.skill.name) // ✅ 修正: skillIds ではなく skillNames をセット
+      )
+      // 日付を YYYY-MM-DD 形式に変換
+      const formattedDate = project.deadline
+        ? new Date(project.deadline).toISOString().split('T')[0]
+        : ''
+      setValue('deadline', formattedDate)
+      setValue('price', project.price?.toString() || '')
     }
-  }, [projectId, loadProjectById])
-
-  // ✅ `selectedProject` の変更を検知してフォームに反映
-  useEffect(() => {
-    if (selectedProject) {
-      console.log('Selected project changed:', selectedProject)
-      const formData = {
-        name: selectedProject.name,
-        description: selectedProject.description,
-        skills: selectedProject.skills,
-        deadline: selectedProject.deadline,
-        price: selectedProject.price
-      }
-      reset(formData)
-    }
-  }, [selectedProject, reset])
+  }, [project, setValue])
 
   const onSubmit = async (data: z.infer<typeof schema>) => {
-    if (projectId) {
+    if (typeof params?.projectId === 'string') {
       try {
-        updateProject(projectId, data)
+        await updateMutation.mutateAsync({
+          id: params.projectId,
+          title: data.title,
+          description: data.description,
+          deadline: data.deadline,
+          price: Number.parseInt(data.price, 10),
+          skillNames: data.skillNames
+        })
+
+        // スキルの更新
+        await updateSkillsMutation.mutateAsync({
+          projectId: params.projectId,
+          skillNames: data.skillNames
+        })
+
         setModalOpened(true)
-        router.push('/admin/projects')
       } catch (error) {
-        console.error('Error updating project:', error)
+        console.error('プロジェクト更新エラー:', error)
       }
     }
   }
 
-  // ✅ `selectedProject` がまだロードされていない場合の処理
-  if (!selectedProject) {
+  if (isProjectLoading || isUserLoading) {
+    return (
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: 'calc(100vh - 60px)',
+          width: '100%'
+        }}
+      >
+        <Loader size="xl" />
+      </div>
+    )
+  }
+
+  if (!project) {
     return (
       <div style={{ textAlign: 'center', marginTop: '50px' }}>
-        <Loader size="xl" color="blue" />
-        <Text mt="md">データを読み込んでいます...</Text>
+        <Text>プロジェクトが見つかりません</Text>
       </div>
     )
   }
@@ -108,81 +150,115 @@ export default function EditProject() {
       >
         案件編集
       </Title>
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'flex-end',
-          marginBottom: '20px',
-          padding: '0 20px',
-          maxWidth: '1200px',
-          margin: '0 auto 20px'
-        }}
-      >
-        <Button
-          color="blue"
-          size="sm"
-          className="nav-link"
-          style={{
-            width: 'auto',
-            minWidth: '200px',
-            marginRight: '160px'
-          }}
-          onClick={() => router.back()}
-        >
-          戻る
-        </Button>
-      </div>
+
+      <BackButton />
 
       <Card
-        shadow="sm"
-        padding="lg"
-        withBorder
-        className="form-container"
-        style={{ maxWidth: '600px', margin: 'auto' }}
+        shadow="md"
+        padding="xl"
+        style={{ maxWidth: '700px', margin: 'auto', marginBottom: '48px' }}
       >
         <form onSubmit={handleSubmit(onSubmit)}>
-          <Stack>
+          <Stack gap="xl">
             <TextInput
-              label={<span className="form-label">案件名</span>}
-              {...register('name')}
-              error={errors.name?.message}
+              label={
+                <span
+                  className="form-label"
+                  style={{ marginBottom: '10px', display: 'inline-block' }}
+                >
+                  案件名
+                </span>
+              }
+              {...register('title')}
+              error={errors.title?.message}
+              size="md"
             />
             <Textarea
-              label={<span className="form-label">概要</span>}
+              label={
+                <span
+                  className="form-label"
+                  style={{ marginBottom: '10px', display: 'inline-block' }}
+                >
+                  概要
+                </span>
+              }
               {...register('description')}
               error={errors.description?.message}
+              size="md"
+              minRows={4}
             />
 
             <MultiSelect
-              label={<span className="form-label">必要なスキル</span>}
-              data={['Next.js', 'React', 'TypeScript', 'Supabase', 'Node.js']}
-              value={skills}
-              onChange={(value) => setValue('skills', value)}
-              error={errors.skills?.message}
+              label={
+                <span
+                  className="form-label"
+                  style={{ marginBottom: '10px', display: 'inline-block' }}
+                >
+                  必要なスキル
+                </span>
+              }
+              data={skills.map((skill) => ({
+                value: skill.name,
+                label: skill.name
+              }))}
+              value={selectedSkills}
+              onChange={(value) => setValue('skillNames', value)}
+              error={errors.skillNames?.message}
               searchable
+              size="md"
+              styles={{
+                dropdown: {
+                  zIndex: 9999
+                }
+              }}
             />
 
             <TextInput
-              label={<span className="form-label">募集締切日</span>}
+              label={
+                <span
+                  className="form-label"
+                  style={{ marginBottom: '10px', display: 'inline-block' }}
+                >
+                  募集締切日
+                </span>
+              }
               type="date"
+              min={
+                new Date(new Date().setDate(new Date().getDate() + 1))
+                  .toISOString()
+                  .split('T')[0]
+              }
               {...register('deadline')}
               error={errors.deadline?.message}
+              size="md"
             />
             <TextInput
-              label={<span className="form-label">単価</span>}
+              label={
+                <span
+                  className="form-label"
+                  style={{ marginBottom: '10px', display: 'inline-block' }}
+                >
+                  単価
+                </span>
+              }
               type="text"
               {...register('price')}
               error={errors.price?.message}
+              size="md"
             />
 
             <Button
               type="submit"
               color="blue"
               fullWidth
-              disabled={isSubmitting}
+              disabled={isSubmitting || updateMutation.isLoading}
               className="button-group"
             >
-              {isSubmitting ? <Loader size="sm" color="white" /> : '更新する'}
+              {updateMutation.isLoading ? (
+                <Loader size="sm" color="white" />
+              ) : (
+                '更新する'
+              )}
             </Button>
           </Stack>
         </form>
@@ -193,9 +269,24 @@ export default function EditProject() {
         onClose={() => setModalOpened(false)}
         centered
         className="modal-content"
+        styles={{
+          overlay: {
+            zIndex: 1001
+          },
+          inner: {
+            zIndex: 1002
+          },
+          content: {
+            zIndex: 1003
+          }
+        }}
       >
-        <Text style={{ textAlign: 'center' }}>案件を更新しました！</Text>
-        <Group justify="flex-end" mt="md" className="modal-footer">
+        <Text
+          style={{ textAlign: 'center', fontSize: '1.2rem', marginTop: '40px' }}
+        >
+          案件を更新しました！
+        </Text>
+        <Group justify="center" mt="xl" className="modal-footer">
           <Button color="blue" onClick={() => router.push('/admin/projects')}>
             OK
           </Button>

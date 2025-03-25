@@ -1,10 +1,10 @@
 'use client'
-import React, { useEffect, useState } from 'react'
+
+import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import useProjectStore from '@/store/projectStore'
 import {
   TextInput,
   Textarea,
@@ -15,22 +15,14 @@ import {
   Modal,
   Card,
   MultiSelect,
-  Loader
+  Loader,
+  Text
 } from '@mantine/core'
-
-// Zustandストア（データのローカル保存）
-interface Project {
-  name: string
-  description: string
-  skills: string[]
-  deadline: string
-  price: string
-}
-
-interface ProjectState {
-  projects: Project[]
-  addProject: (project: Project) => void
-}
+import { clientApi } from '~/lib/trpc/client-api'
+import type { TRPCClientErrorLike } from '@trpc/client'
+import type { DefaultErrorShape } from '@trpc/server'
+import BackButton from '@/app/_components/BackButton'
+import { useAdminAccessGuard } from '@/hooks/useAdminAccessGuard'
 
 // フォームスキーマ定義
 const projectSchema = z.object({
@@ -44,12 +36,38 @@ const projectSchema = z.object({
 export default function NewProject() {
   const router = useRouter()
   const [modalOpened, setModalOpened] = useState(false)
-  const { addProject, loadProjects, projects } = useProjectStore() // ✅ Zustand ストアを利用
+  const [errorMessage, setErrorMessage] = useState<string>('')
+  const { user, isLoading: isUserLoading } = useAdminAccessGuard()
 
-  // ✅ 初回レンダリング時にローカルストレージのデータをロード
-  useEffect(() => {
-    loadProjects()
-  }, [])
+  // tRPC でプロジェクト一覧とスキル一覧を取得
+  const { data: projects, isLoading: isProjectLoading } =
+    clientApi.project.list.useQuery()
+  const { data: skills = [], isLoading: isSkillLoading } =
+    clientApi.skill.list.useQuery()
+
+  // スキルデータをMultiSelect用に整形
+  const skillOptions = skills.map((skill) => ({
+    value: skill.name,
+    label: skill.name
+  }))
+
+  // tRPC でプロジェクト作成
+  const mutation = clientApi.project.create.useMutation({
+    onSuccess: () => {
+      setModalOpened(true)
+      setErrorMessage('')
+    },
+    onError: (error: TRPCClientErrorLike<DefaultErrorShape>) => {
+      console.error('プロジェクトの登録に失敗しました:', error)
+      if (error.message.includes('スキル')) {
+        setErrorMessage(error.message)
+      } else {
+        setErrorMessage(
+          'プロジェクトの登録に失敗しました。時間をおいて再度お試しください。'
+        )
+      }
+    }
+  })
 
   const {
     control,
@@ -66,27 +84,26 @@ export default function NewProject() {
     resolver: zodResolver(projectSchema)
   })
 
-  const onSubmit = (data: {
+  const onSubmit = async (data: {
     name: string
     description: string
     skills: string[]
     deadline: string
     price: string
   }) => {
-    const projectWithIdAndDate = {
-      ...data,
-      id: Date.now().toString(),
-      date: new Date().toISOString()
-    }
-    addProject(projectWithIdAndDate)
-    setModalOpened(true)
+    mutation.mutate({
+      title: data.name,
+      description: data.description,
+      skillNames: data.skills,
+      deadline: data.deadline,
+      price: Number(data.price)
+    })
   }
 
   return (
     <>
       <Title
         order={2}
-        className="title"
         style={{
           textAlign: 'center',
           color: '#5a5a5a',
@@ -97,104 +114,145 @@ export default function NewProject() {
         新規案件作成
       </Title>
 
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'flex-end',
-          marginBottom: '20px',
-          padding: '0 20px',
-          maxWidth: '1200px',
-          margin: '0 auto 20px'
-        }}
-      >
-        <Button
-          color="blue"
-          size="sm"
-          className="nav-link"
+      {errorMessage && (
+        <Text
           style={{
-            width: 'auto',
-            minWidth: '120px',
-            marginRight: '220px'
+            textAlign: 'center',
+            color: 'red'
           }}
-          onClick={() => router.back()}
+          mb="md"
         >
-          戻る
-        </Button>
-      </div>
+          {errorMessage}
+        </Text>
+      )}
+
+      <BackButton />
 
       <Card
-        shadow="sm"
-        padding="lg"
-        withBorder
-        className="form-container"
-        style={{ maxWidth: '500px', margin: 'auto' }}
+        shadow="md"
+        padding="xl"
+        style={{ maxWidth: '700px', margin: 'auto', marginBottom: '48px' }}
       >
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <Stack>
-            <TextInput
-              label={<span className="form-label">案件名</span>}
-              required
-              {...register('name')}
-              error={
-                errors.name?.message ? String(errors.name.message) : undefined
-              }
-            />
-            <Textarea
-              label={<span className="form-label">概要</span>}
-              required
-              {...register('description')}
-              error={
-                errors.description?.message
-                  ? String(errors.description.message)
-                  : undefined
-              }
-            />
+        {isProjectLoading || isUserLoading ? (
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              minHeight: 'calc(100vh - 60px)', // ナビバー除外など必要に応じて調整
+              width: '100%'
+            }}
+          >
+            <Loader color="blue" />
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <Stack gap="xl">
+              <TextInput
+                label={
+                  <span
+                    style={{ marginBottom: '10px', display: 'inline-block' }}
+                  >
+                    案件名
+                  </span>
+                }
+                required
+                {...register('name')}
+                error={errors.name?.message}
+                size="md"
+              />
+              <Textarea
+                label={
+                  <span
+                    style={{ marginBottom: '10px', display: 'inline-block' }}
+                  >
+                    概要
+                  </span>
+                }
+                required
+                {...register('description')}
+                error={errors.description?.message}
+                size="md"
+                minRows={4}
+              />
 
-            <Controller
-              control={control}
-              name="skills"
-              render={({ field }) => (
-                <MultiSelect
-                  label={<span className="form-label">必要なスキル</span>}
-                  required
-                  data={['Next.js', 'Supabase', 'Typescript', 'React']}
-                  error={
-                    errors.skills?.message
-                      ? String(errors.skills.message)
-                      : undefined
-                  }
-                  {...field}
-                  searchable
-                />
-              )}
-            />
+              <Controller
+                control={control}
+                name="skills"
+                render={({ field }) => (
+                  <MultiSelect
+                    label={
+                      <span
+                        style={{
+                          marginBottom: '10px',
+                          display: 'inline-block'
+                        }}
+                      >
+                        必要なスキル
+                      </span>
+                    }
+                    required
+                    data={skillOptions}
+                    error={errors.skills?.message}
+                    {...field}
+                    searchable
+                    nothingFoundMessage="スキルが見つかりません"
+                    placeholder="スキルを選択してください"
+                    size="md"
+                  />
+                )}
+              />
 
-            <TextInput
-              label={<span className="form-label">募集締切日</span>}
-              type="date"
-              required
-              {...register('deadline')}
-              error={errors.deadline?.message?.toString()}
-            />
-            <TextInput
-              label={<span className="form-label">単価</span>}
-              type="number"
-              required
-              {...register('price')}
-              error={errors.price?.message?.toString()}
-            />
+              <TextInput
+                label={
+                  <span
+                    style={{ marginBottom: '10px', display: 'inline-block' }}
+                  >
+                    募集締切日
+                  </span>
+                }
+                type="date"
+                required
+                min={
+                  new Date(new Date().setDate(new Date().getDate() + 1))
+                    .toISOString()
+                    .split('T')[0]
+                }
+                {...register('deadline')}
+                error={errors.deadline?.message}
+                size="md"
+              />
+              <TextInput
+                label={
+                  <span
+                    style={{ marginBottom: '10px', display: 'inline-block' }}
+                  >
+                    単価
+                  </span>
+                }
+                type="number"
+                required
+                {...register('price')}
+                error={errors.price?.message}
+                size="md"
+              />
 
-            <Button
-              type="submit"
-              color="blue"
-              fullWidth
-              disabled={isSubmitting}
-              className="button-group"
-            >
-              {isSubmitting ? <Loader size="sm" color="white" /> : '登録'}
-            </Button>
-          </Stack>
-        </form>
+              <Button
+                type="submit"
+                color="blue"
+                fullWidth
+                disabled={isSubmitting || mutation.isLoading}
+                mt="xl"
+              >
+                {mutation.isLoading ? (
+                  <Loader size="sm" color="white" />
+                ) : (
+                  '登録'
+                )}
+              </Button>
+            </Stack>
+          </form>
+        )}
       </Card>
 
       <Modal
@@ -202,10 +260,23 @@ export default function NewProject() {
         onClose={() => setModalOpened(false)}
         centered
         className="modal-content"
+        styles={{
+          overlay: {
+            zIndex: 1001
+          },
+          inner: {
+            zIndex: 1002
+          },
+          content: {
+            zIndex: 1003
+          }
+        }}
       >
-        <Title order={5} style={{ textAlign: 'center' }}>
+        <Text
+          style={{ textAlign: 'center', fontSize: '1.2rem', marginTop: '40px' }}
+        >
           案件が作成されました！
-        </Title>
+        </Text>
         <Group justify="center" mt="xl" className="modal-footer">
           <Button color="blue" onClick={() => router.push('/admin/projects')}>
             OK

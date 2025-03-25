@@ -591,7 +591,7 @@ erDiagram
     Entry {
         string project_id FK "案件ID"
         string user_id FK "ユーザーID"
-        enum status "エントリーステータス（PENDING / APPROVED / REJECTED）"
+        enum status "エントリーステータス（PENDING / APPROVED / REJECTED / WITHDRAWN）"
         date entry_date "エントリー日"
     }
 

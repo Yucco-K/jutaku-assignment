@@ -568,18 +568,19 @@ slack のメンションについては、質問をしたい人につける。
 
 <table>
   <tr>
-    <td style="padding-right: 16px;">
+    <td>
       <a href="https://youtu.be/_I6psKgUFZs">
-        <img src="https://img.youtube.com/vi/_I6psKgUFZs/0.jpg" alt="デモ動画①" width="320"/>
+        <img src="https://img.youtube.com/vi/_I6psKgUFZs/0.jpg" alt="デモ動画①" width="320" style="margin-right: 16px;" />
       </a>
     </td>
     <td>
       <a href="https://youtu.be/kJQrdQzIqsg">
-        <img src="https://img.youtube.com/vi/kJQrdQzIqsg/0.jpg" alt="デモ動画②" width="320"/>
+        <img src="https://img.youtube.com/vi/kJQrdQzIqsg/0.jpg" alt="デモ動画②" width="320" />
       </a>
     </td>
   </tr>
 </table>
+
 
 
 

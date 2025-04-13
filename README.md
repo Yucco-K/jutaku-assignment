@@ -568,7 +568,7 @@ slack のメンションについては、質問をしたい人につける。
 
 <table>
   <tr>
-    <td>
+    <td style="padding-right: 16px;">
       <a href="https://youtu.be/_I6psKgUFZs">
         <img src="https://img.youtube.com/vi/_I6psKgUFZs/0.jpg" alt="デモ動画①" width="320"/>
       </a>
@@ -580,6 +580,7 @@ slack のメンションについては、質問をしたい人につける。
     </td>
   </tr>
 </table>
+
 
 
 

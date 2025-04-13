@@ -602,8 +602,6 @@ erDiagram
     Skill ||--o{ ProjectSkill : is_required_by
 
 
----
-
 【受託開発アサイン課題 提出済】
 
 [![デモ動画①](https://img.youtube.com/vi/_I6psKgUFZs/0.jpg)](https://youtu.be/_I6psKgUFZs)

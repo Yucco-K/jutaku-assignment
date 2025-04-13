@@ -557,50 +557,12 @@ slack のメンションについては、質問をしたい人につける。
 
 # 【受託開発アサイン課題 ①】DB設計とDBの接続
 
-## ERD図作成
+## ER図（ERD）
 
-```mermaid
-erDiagram
-    User {
-        string id PK
-        string name
-        string email
-        string role
-    }
+こちらをを参照してください：  
+👉 [ERDを見る](https://github.com/Yucco-K/jutaku-assignment/blob/main/src/app/docs/database/ERD.md)
 
-    Project {
-        string id PK
-        string title
-        string description
-        int price
-        date deadline
-        date created_at
-        string creator_id FK
-    }
-
-    Skill {
-        string id PK
-        string name
-    }
-
-    ProjectSkill {
-        string project_id FK
-        string skill_id FK
-    }
-
-    Entry {
-        string project_id FK
-        string user_id FK
-        string status
-        date entry_date
-    }
-
-    User ||--o{ Project : creates
-    User ||--o{ Entry : entries
-    Project ||--o{ Entry : has_entries
-    Project ||--o{ ProjectSkill : requires
-    Skill ||--o{ ProjectSkill : is_required_by
-
+--- 
 
 【受託開発アサイン課題 提出済】
 

@@ -570,9 +570,10 @@ slack のメンションについては、質問をしたい人につける。
   <tr>
     <td>
       <a href="https://youtu.be/_I6psKgUFZs">
-        <img src="https://img.youtube.com/vi/_I6psKgUFZs/0.jpg" alt="デモ動画①" width="320" style="margin-right: 16px;" />
+        <img src="https://img.youtube.com/vi/_I6psKgUFZs/0.jpg" alt="デモ動画①" width="320" />
       </a>
     </td>
+    <td width="24"></td> <!-- ← ここがマージン用スペーサー -->
     <td>
       <a href="https://youtu.be/kJQrdQzIqsg">
         <img src="https://img.youtube.com/vi/kJQrdQzIqsg/0.jpg" alt="デモ動画②" width="320" />
@@ -580,6 +581,7 @@ slack のメンションについては、質問をしたい人につける。
     </td>
   </tr>
 </table>
+
 
 
 

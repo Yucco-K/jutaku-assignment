@@ -566,8 +566,20 @@ slack のメンションについては、質問をしたい人につける。
 
 【受託開発アサイン課題 提出済】
 
-[![デモ動画①](https://img.youtube.com/vi/_I6psKgUFZs/0.jpg)](https://youtu.be/_I6psKgUFZs)
+<table>
+  <tr>
+    <td>
+      <a href="https://youtu.be/_I6psKgUFZs">
+        <img src="https://img.youtube.com/vi/_I6psKgUFZs/0.jpg" alt="デモ動画①" width="320"/>
+      </a>
+    </td>
+    <td>
+      <a href="https://youtu.be/kJQrdQzIqsg">
+        <img src="https://img.youtube.com/vi/kJQrdQzIqsg/0.jpg" alt="デモ動画②" width="320"/>
+      </a>
+    </td>
+  </tr>
+</table>
 
-[![デモ動画②](https://img.youtube.com/vi/kJQrdQzIqsg/0.jpg)](https://youtu.be/kJQrdQzIqsg)
 
 

@@ -575,10 +575,26 @@ slack のメンションについては、質問をしたい人につける。
         <img src="https://img.youtube.com/vi/_I6psKgUFZs/0.jpg" alt="デモ動画①" width="320" />
       </a>
     </td>
-    <td width="24"></td> <!-- ← ここがマージン用スペーサー -->
+    <td width="32"></td> <!-- ← ここがマージン用スペーサー -->
     <td>
       <a href="https://youtu.be/kJQrdQzIqsg">
         <img src="https://img.youtube.com/vi/kJQrdQzIqsg/0.jpg" alt="デモ動画②" width="320" />
+      </a>
+    </td>
+  </tr>
+</table>
+
+<table>
+  <tr>
+    <td>
+      <a href="https://youtu.be/_If4Cs7m7gw">
+        <img src="https://img.youtube.com/vi/_If4Cs7m7gw/0.jpg" alt="デモ動画①" width="320" />
+      </a>
+    </td>
+    <td width="32"></td> <!-- ← スペーサー -->
+    <td>
+      <a href="https://youtu.be/eXFAsXSCwjk">
+        <img src="https://img.youtube.com/vi/eXFAsXSCwjk/0.jpg" alt="デモ動画②" width="320" />
       </a>
     </td>
   </tr>

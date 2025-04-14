@@ -1,3 +1,58 @@
+
+
+# 【受託開発アサイン課題】
+
+## ER図（ERD）
+
+こちらをを参照してください：  
+👉 [ERDを見る](https://github.com/Yucco-K/jutaku-assignment/blob/main/src/app/docs/database/ERD.md)
+
+--- 
+
+## 実装
+
+※ 受託開発アサイン課題 提出済 📝
+
+##### ▶️ 左：管理者用ページ　　▶️ 右：一般ユーザー用ページ
+
+<table>
+  <tr>
+    <td>
+      <a href="https://youtu.be/_I6psKgUFZs">
+        <img src="https://img.youtube.com/vi/_I6psKgUFZs/0.jpg" alt="デモ動画①" width="320" />
+      </a>
+    </td>
+    <td width="32"></td> <!-- ← ここがマージン用スペーサー -->
+    <td>
+      <a href="https://youtu.be/kJQrdQzIqsg">
+        <img src="https://img.youtube.com/vi/kJQrdQzIqsg/0.jpg" alt="デモ動画②" width="320" />
+      </a>
+    </td>
+  </tr>
+</table>
+
+---
+
+##### 📱 スマホ表示の確認（左：管理者／右：ユーザー）
+
+<table>
+  <tr>
+    <td>
+      <a href="https://youtu.be/_If4Cs7m7gw">
+        <img src="https://img.youtube.com/vi/_If4Cs7m7gw/0.jpg" alt="デモ動画③" width="320" />
+      </a>
+    </td>
+    <td width="32"></td> <!-- ← スペーサー -->
+    <td>
+      <a href="https://youtu.be/eXFAsXSCwjk">
+        <img src="https://img.youtube.com/vi/eXFAsXSCwjk/0.jpg" alt="デモ動画④" width="320" />
+      </a>
+    </td>
+  </tr>
+</table>
+
+--- 
+
 # 課題概要
 
 https://if-tech.notion.site/177285b35dff806faa95f2d08e32f195
@@ -550,65 +605,3 @@ slack のメンションについては、質問をしたい人につける。
 
 デザインについて、質問がある場合、Figma にコメントを残した上で、Slack にて、質問を記載する
 slack のメンションについては、質問をしたい人につける。
-
-
----
-
-
-# 【受託開発アサイン課題】
-
-## ER図（ERD）
-
-こちらをを参照してください：  
-👉 [ERDを見る](https://github.com/Yucco-K/jutaku-assignment/blob/main/src/app/docs/database/ERD.md)
-
---- 
-
-## 実装
-
-※ 受託開発アサイン課題 提出済 📝
-
-##### ▶️ 左：管理者用ページ　　▶️ 右：一般ユーザー用ページ
-
-<table>
-  <tr>
-    <td>
-      <a href="https://youtu.be/_I6psKgUFZs">
-        <img src="https://img.youtube.com/vi/_I6psKgUFZs/0.jpg" alt="デモ動画①" width="320" />
-      </a>
-    </td>
-    <td width="32"></td> <!-- ← ここがマージン用スペーサー -->
-    <td>
-      <a href="https://youtu.be/kJQrdQzIqsg">
-        <img src="https://img.youtube.com/vi/kJQrdQzIqsg/0.jpg" alt="デモ動画②" width="320" />
-      </a>
-    </td>
-  </tr>
-</table>
-
----
-
-##### 📱 スマホ表示の確認（左：管理者／右：ユーザー）
-
-<table>
-  <tr>
-    <td>
-      <a href="https://youtu.be/_If4Cs7m7gw">
-        <img src="https://img.youtube.com/vi/_If4Cs7m7gw/0.jpg" alt="デモ動画③" width="320" />
-      </a>
-    </td>
-    <td width="32"></td> <!-- ← スペーサー -->
-    <td>
-      <a href="https://youtu.be/eXFAsXSCwjk">
-        <img src="https://img.youtube.com/vi/eXFAsXSCwjk/0.jpg" alt="デモ動画④" width="320" />
-      </a>
-    </td>
-  </tr>
-</table>
-
-
-
-
-
-
-

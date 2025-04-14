@@ -566,9 +566,9 @@ slack のメンションについては、質問をしたい人につける。
 
 ## 実装
 
-※ 受託開発アサイン課題 提出済
+※ 受託開発アサイン課題 提出済 📝
 
-##### 左：管理者用ページ　右：一般ユーザー用ページ
+##### ▶️ 左：管理者用ページ　　▶️ 右：一般ユーザー用ページ
 
 <table>
   <tr>
@@ -586,21 +586,26 @@ slack のメンションについては、質問をしたい人につける。
   </tr>
 </table>
 
+---
+
+##### 📱 スマホ表示の確認（左：管理者／右：ユーザー）
+
 <table>
   <tr>
     <td>
       <a href="https://youtu.be/_If4Cs7m7gw">
-        <img src="https://img.youtube.com/vi/_If4Cs7m7gw/0.jpg" alt="デモ動画①" width="320" />
+        <img src="https://img.youtube.com/vi/_If4Cs7m7gw/0.jpg" alt="デモ動画③" width="320" />
       </a>
     </td>
     <td width="32"></td> <!-- ← スペーサー -->
     <td>
       <a href="https://youtu.be/eXFAsXSCwjk">
-        <img src="https://img.youtube.com/vi/eXFAsXSCwjk/0.jpg" alt="デモ動画②" width="320" />
+        <img src="https://img.youtube.com/vi/eXFAsXSCwjk/0.jpg" alt="デモ動画④" width="320" />
       </a>
     </td>
   </tr>
 </table>
+
 
 
 

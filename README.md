@@ -1,15 +1,15 @@
 
 
-# 【受託開発アサイン課題】
+## 【受託開発アサイン課題】
 
-## ER図（ERD）
+### ER図（ERD）
 
 こちらをを参照してください：  
 👉 [ERDを見る](https://github.com/Yucco-K/jutaku-assignment/blob/main/src/app/docs/database/ERD.md)
 
 --- 
 
-## 実装
+### 実装
 
 ※ 提出済 📝
 

@@ -4,6 +4,8 @@
 
 ### ER図（ERD）
 
+※ 提出済 📝
+
 こちらをを参照してください：  
 👉 [ERDを見る](https://github.com/Yucco-K/jutaku-assignment/blob/main/src/app/docs/database/ERD.md)
 

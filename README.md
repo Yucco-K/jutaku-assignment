@@ -59,6 +59,8 @@
 
 ※ 提出済 📝
 
+Cursol ✖️ Notion で作成
+
 [【受託開発アサイン課題 ③】バックエンドAPIの設計・実装 ](https://www.notion.so/API-1b4a7adbd8eb80608844ef733d8e5055?pvs=4)
 
 ---
